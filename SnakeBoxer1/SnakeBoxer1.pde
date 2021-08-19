@@ -53,6 +53,8 @@ void setupGame() {
   SILHOUETTES[2].setSelectionZone(deliX, 0, width, deliY);
   SILHOUETTES[3].setSelectionZone(deliX, deliY, width, height);
   SILHOUETTES[0].isSelected = true;
+  // Flip the player based on the default selected silhouette
+  PLAYER.isFlippedX = true;
 
   // Set the initial enemies using the difficulty increase function
   ENEMIES = new MovingEnemy[16];
@@ -101,6 +103,10 @@ void drawScoreAndLevel() {
   text("KNOCKOUTS:" + KNOCKOUTS, width * 0.5, textY);
 }
 
+boolean isLeftSilhouette(int index) {
+  return index < (SILHOUETTES.length * 0.5);
+}
+
 void drawUserResources() {
   int lastSelectedIndex = -1;
   
@@ -108,7 +114,7 @@ void drawUserResources() {
   DELI_SHOP.drawImage();
   for (int i = 0; i < SILHOUETTES.length; i++) {
     // Flip the sprites for the right side silhouettes
-    SILHOUETTES[i].drawImage(i >= (SILHOUETTES.length * 0.5));
+    SILHOUETTES[i].drawImage(isLeftSilhouette(i));
     // Need to track which one was selected to draw the player there
     if (SILHOUETTES[i].isSelected) {
       lastSelectedIndex = i;
@@ -120,7 +126,7 @@ void drawUserResources() {
     PLAYER.x = SILHOUETTES[lastSelectedIndex].x;
     PLAYER.y = SILHOUETTES[lastSelectedIndex].y;
     // Flipping is toggled based on which side the silhouette is placed
-    PLAYER.isFlippedX = lastSelectedIndex >= (SILHOUETTES.length * 0.5);
+    PLAYER.isFlippedX = isLeftSilhouette(lastSelectedIndex);
     PLAYER.drawImage();
   }
   
