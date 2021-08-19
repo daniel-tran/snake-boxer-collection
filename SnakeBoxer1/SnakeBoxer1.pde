@@ -7,8 +7,6 @@ void setup() {
   
   UNIT_X = width * 0.01;
   UNIT_Y = UNIT_X;
-  FIGHTER_SPRITE_WIDTH = UNIT_X * 22;
-  FIGHTER_SPRITE_HEIGHT = UNIT_Y * 22;
   SNAKE_BOXER_LOGO = loadImage("titlescreen/SnakeBoxer1_Logo.png");
 }
 
@@ -18,39 +16,44 @@ void setupGame() {
   String idleSprite = "characters/BoxerJoe/BoxerJoe_Idle.png";
   DELI_SHOP = new DeliShop(deliX, deliY, UNIT_X * 25, UNIT_Y * 25,
                            "DeliShop.png", "DeliShopDestroyed.png");
-                           
+
+  BACKDROP = new Background(0, height * 0.34, UNIT_X);
+
   LEVEL = 0;
   KNOCKOUTS = 0;
   MAX_LEVEL_KNOCKOUTS = 0;
-  GAME_OVER_TIMER = 0;
+
+  PLAYER = new Fighter(width * 0.55, height * 0.45,
+                       "characters/BoxerJoe/BoxerJoe_Idle.png",
+                       "characters/BoxerJoe/BoxerJoe_Block.png",
+                       "characters/BoxerJoe/BoxerJoe_Hurt.png",
+                       new String[]{
+                         "characters/BoxerJoe/BoxerJoe_Attack1.png",
+                         "characters/BoxerJoe/BoxerJoe_Attack2.png"
+                       },
+                       UNIT_X * 22, UNIT_Y * 22);
+  // Attacking feels a bit slow for some reason
+  PLAYER.attack1Timer.timeInc *= 2;
+  PLAYER.hurtTimer.timeInc *= 2;
+
+  ENEMY_SPAWN_UPPER_Y = height * 0.4;
+  ENEMY_SPAWN_LOWER_Y = height * 0.6;
 
   // Indexes refer to each silhouette starting from the top-left,
   // and then going anti-clockwise
-  ENEMY_SPAWN_UPPER_Y = height * 0.4;
-  ENEMY_SPAWN_LOWER_Y = height * 0.6;
-  
-  SILHOUETTES[0] = new Silhouette(width * 0.35, ENEMY_SPAWN_UPPER_Y, FIGHTER_SPRITE_WIDTH, FIGHTER_SPRITE_HEIGHT, idleSprite);
-  SILHOUETTES[1] = new Silhouette(width * 0.35, ENEMY_SPAWN_LOWER_Y, FIGHTER_SPRITE_WIDTH, FIGHTER_SPRITE_HEIGHT, idleSprite);
-  SILHOUETTES[2] = new Silhouette(width * 0.65, ENEMY_SPAWN_UPPER_Y, FIGHTER_SPRITE_WIDTH, FIGHTER_SPRITE_HEIGHT, idleSprite);
-  SILHOUETTES[3] = new Silhouette(width * 0.65, ENEMY_SPAWN_LOWER_Y, FIGHTER_SPRITE_WIDTH, FIGHTER_SPRITE_HEIGHT, idleSprite);
+  float silhouetteLeftX = width * 0.35;
+  float silhouetteRightX = width * 0.65;
+  SILHOUETTES[0] = new Silhouette(silhouetteLeftX, ENEMY_SPAWN_UPPER_Y, PLAYER.imgWidth, PLAYER.imgHeight, idleSprite);
+  SILHOUETTES[1] = new Silhouette(silhouetteLeftX, ENEMY_SPAWN_LOWER_Y, PLAYER.imgWidth, PLAYER.imgHeight, idleSprite);
+  SILHOUETTES[2] = new Silhouette(silhouetteRightX, ENEMY_SPAWN_UPPER_Y, PLAYER.imgWidth, PLAYER.imgHeight, idleSprite);
+  SILHOUETTES[3] = new Silhouette(silhouetteRightX, ENEMY_SPAWN_LOWER_Y, PLAYER.imgWidth, PLAYER.imgHeight, idleSprite);
   // Touching a certain corner of the screen corresponds to a silhouette
   SILHOUETTES[0].setSelectionZone(0, 0, deliX, deliY);
   SILHOUETTES[1].setSelectionZone(0, deliY, deliX, height);
   SILHOUETTES[2].setSelectionZone(deliX, 0, width, deliY);
   SILHOUETTES[3].setSelectionZone(deliX, deliY, width, height);
   SILHOUETTES[0].isSelected = true;
-  
-  String[] attacksNormal = {"characters/BoxerJoe/BoxerJoe_Attack1.png",
-                            "characters/BoxerJoe/BoxerJoe_Attack2.png"};
-  PLAYER = new Fighter(width * 0.55, height * 0.45,
-                       "characters/BoxerJoe/BoxerJoe_Idle.png",
-                       "characters/BoxerJoe/BoxerJoe_Block.png",
-                       "characters/BoxerJoe/BoxerJoe_Hurt.png",
-                       attacksNormal,
-                       FIGHTER_SPRITE_WIDTH, FIGHTER_SPRITE_HEIGHT);
-  // Attacking feels a bit slow for some reason
-  PLAYER.attack1TimerInc = 10;
-  PLAYER.hurtTimerInc = 10;
+
   // Set the initial enemies using the difficulty increase function
   ENEMIES = new MovingEnemy[16];
   increaseDifficulty();
@@ -58,26 +61,20 @@ void setupGame() {
 
 float UNIT_X;
 float UNIT_Y;
-float FIGHTER_SPRITE_WIDTH;
-float FIGHTER_SPRITE_HEIGHT;
+Background BACKDROP;
 DeliShop DELI_SHOP;
 Silhouette[] SILHOUETTES = new Silhouette[4];
 Fighter PLAYER;
 MovingEnemy[] ENEMIES;
-float ENEMY_SPEED_UP_FACTOR = 1.25;
 float ENEMY_SPAWN_UPPER_Y;
 float ENEMY_SPAWN_LOWER_Y;
 int LEVEL;
 int KNOCKOUTS;
 int[] LEVEL_BOUNDARIES = {12, 24, 48};
 int MAX_LEVEL_KNOCKOUTS;
-int MAX_LEVEL_KNOCKOUTS_BOUNDARY = 20; 
-int ENEMY_INC = 4;
 PImage SNAKE_BOXER_LOGO;
 boolean GAME_STARTED = false;
-int GAME_OVER_TIMER = 0;
-int GAME_OVER_TIMER_INC = 1;
-int GAME_OVER_TIMER_MAX = 120;
+Timer GAME_OVER_TIMER = new Timer(1, 120, false);
 
 void drawHealthBar() {
   float healthBarSectionX = UNIT_X * 2;
@@ -96,10 +93,12 @@ void drawHealthBar() {
 }
 
 void drawScoreAndLevel() {
+  float textY = height - (UNIT_Y * 6);
+  
   textSize(UNIT_X * 2);
   fill(255);
-  text("LEVEL:" + LEVEL, width * 0.25, height - (UNIT_Y * 6));
-  text("KNOCKOUTS:" + KNOCKOUTS, width * 0.5, height - (UNIT_Y * 6));
+  text("LEVEL:" + LEVEL, width * 0.25, textY);
+  text("KNOCKOUTS:" + KNOCKOUTS, width * 0.5, textY);
 }
 
 void drawUserResources() {
@@ -117,23 +116,12 @@ void drawUserResources() {
   }
   
   if (lastSelectedIndex >= 0) {
-    float playerX = SILHOUETTES[lastSelectedIndex].x;
-    float playerY = SILHOUETTES[lastSelectedIndex].y;
-    
-    boolean isRightSide = lastSelectedIndex >= (SILHOUETTES.length * 0.5);
-    pushMatrix();
-    if (isRightSide) {
-      // Flipping an image requires rescaling but also adjustment of the x, y
-      // variables based on said rescaling.
-      scale(-1, 1);
-      playerX *= -1;
-    }
-    
-    noTint();
-    imageMode(CENTER);
-    image(PLAYER.imgDrawn, playerX, playerY, PLAYER.imgWidth, PLAYER.imgHeight);
-    
-    popMatrix();
+    // Draw the player where the selected silhouette is
+    PLAYER.x = SILHOUETTES[lastSelectedIndex].x;
+    PLAYER.y = SILHOUETTES[lastSelectedIndex].y;
+    // Flipping is toggled based on which side the silhouette is placed
+    PLAYER.isFlippedX = lastSelectedIndex >= (SILHOUETTES.length * 0.5);
+    PLAYER.drawImage();
   }
   
   PLAYER.processAction();
@@ -198,23 +186,22 @@ void drawEnemies() {
 
 void registerKnockout() {  
   KNOCKOUTS++;
-  if (LEVEL < LEVEL_BOUNDARIES.length) {
+  if (LEVEL <= LEVEL_BOUNDARIES.length) {
     // Level up based on the required number of knockouts
     if (LEVEL > 0 && KNOCKOUTS == LEVEL_BOUNDARIES[LEVEL - 1]) {
       increaseDifficulty();
       speedUpEnemies();
     }
   } else if (KNOCKOUTS >= LEVEL_BOUNDARIES[LEVEL_BOUNDARIES.length - 1]) {
+    int maxLevelKnockoutsBoundary = 20;
     MAX_LEVEL_KNOCKOUTS++;
     
     // After hitting the max level, the player can keep levelling up
     // but it only makes the existing enemies more difficult, since
     // all the enemies are currently utilised
-    if (MAX_LEVEL_KNOCKOUTS == MAX_LEVEL_KNOCKOUTS_BOUNDARY) {
+    if (MAX_LEVEL_KNOCKOUTS == maxLevelKnockoutsBoundary) {
       MAX_LEVEL_KNOCKOUTS = 0;
-      // Manually increase the level counter, as the regular
-      // level up function is not being called
-      LEVEL++;
+      increaseDifficulty();
       speedUpEnemies();
     }
   }
@@ -226,8 +213,10 @@ void increaseDifficulty() {
                          "characters/Snake/Snake_Idle2.png"};
   float[] possibleX = {0, width};
   float[] possibleY = {ENEMY_SPAWN_UPPER_Y, ENEMY_SPAWN_LOWER_Y};
-  int firstEnemyIndex = LEVEL * ENEMY_INC;
-  int lastEnemyIndex = firstEnemyIndex + ENEMY_INC;
+  // Number of enemies to add
+  int enemyInc = 4;
+  int firstEnemyIndex = LEVEL * enemyInc;
+  int lastEnemyIndex = firstEnemyIndex + enemyInc;
   LEVEL++;
   
   // Maximum level is when all enemies are utilised
@@ -245,15 +234,16 @@ void increaseDifficulty() {
     ENEMIES[i] = new MovingEnemy(initialX, initialY,
                                  "characters/Snake/Snake_Hurt.png",
                                  idleImages,
-                                 FIGHTER_SPRITE_WIDTH, FIGHTER_SPRITE_HEIGHT,
+                                 PLAYER.imgWidth, PLAYER.imgHeight,
                                  possibleX, possibleY);
   }
 }
 
 void speedUpEnemies() {
+  float enemySpeedUpFactor = 1.25;
   for (int i = 0; i < ENEMIES.length; i++) {
     if (ENEMIES[i] != null) {
-      ENEMIES[i].speedXMultiplier *= ENEMY_SPEED_UP_FACTOR;
+      ENEMIES[i].speedXMultiplier *= enemySpeedUpFactor;
     }
   }
 }
@@ -270,7 +260,7 @@ void mousePressed() {
         pressedIndex = i;
         // Reset attack timer during silhouette reselection, as it counts
         // as a newly made attack
-        PLAYER.attack1Timer = 0;
+        PLAYER.attack1Timer.reset();
         break;
       }
     }
@@ -294,7 +284,7 @@ void mousePressed() {
     
     if (!DELI_SHOP.isActive()) {
       // User can quickly start a new game instead of waiting for the timer to finish  
-      GAME_OVER_TIMER = GAME_OVER_TIMER_MAX;
+      GAME_OVER_TIMER.time = GAME_OVER_TIMER.timeMax;
     }
   } else {
     GAME_STARTED = true;
@@ -303,66 +293,12 @@ void mousePressed() {
 
 }
 
-void drawBackground() {
-  // Drawing a similar version of the city background from "Where's an Egg?"
-  float horizonHeight = height * 0.34;
-  float initialX = 0;
-  float incX = UNIT_X;
-  float widthX = incX * 2;
-  // Height factor values are effectively a percentage of sky between the
-  // pixel column and the top of the screen.
-  // Example: 0.1 = Pixel column covers 90% of the sky height
-  float[] heightFactors = {0.4, 0.3, 0.3, 0.3,
-                           0.7, 0.7, 0.7, 0.75,
-                           0.85, 0.85,
-                           0.55, 0.55, 0.55, 0.55,
-                           0.7,
-                           0.3, 0.3, 0.1, 0.3, 0.3,
-                           0.8, 0.8,
-                           0.85, 0.9,
-                           0.75, 0.75, 0.75, 0.75,
-                           0.95,
-                           0.85, 0.85,
-                           0.5, 0.45, 0.45, 0.5,
-                           0.8, 0.8,
-                           0.6, 0.6, 0.6, 0.6, 0.6, 0.6,
-                           0.85, 0.85,
-                           0.1, 0.1, 0.1, 0.1,
-                           0.75, 0.75, 0.75,
-                           0.55, 0.55,
-                           0.8, 0.85, 0.85
-                         };
-  // 1 background iteration = no repeating background
-  int backgroundIterations = 2;
-
-  background(184);
-  rectMode(CORNERS);
-  
-  // Draw the sky
-  fill(153, 255, 255);
-  rect(0, 0, width, horizonHeight);
-  
-  // Draw the buildings as a set of pixel columns
-  stroke(153, 204, 153);
-  fill(153, 204, 153);
-  // Background willl repeat, by increasing the value of the x coordinate
-  // and persisting its modification after the first cycle.
-  for (int c = 0; c < backgroundIterations; c++) {
-    for (int i = 0; i < heightFactors.length; i++) {
-      rect(initialX, horizonHeight * heightFactors[i], initialX + widthX, horizonHeight);
-      // Increment the x coordinate after drawing to avoid having an initial empty gap 
-      initialX += incX;
-    }
-  }
-  noStroke();
-}
-
 void checkGameOverTimer() {
   // Pause for a brief period after a game over, then reset the game
   if (!DELI_SHOP.isActive()) {
-    GAME_OVER_TIMER += GAME_OVER_TIMER_INC;
-    if (GAME_OVER_TIMER >= GAME_OVER_TIMER_MAX) {
-      GAME_OVER_TIMER = 0;
+    GAME_OVER_TIMER.tick();
+    if (GAME_OVER_TIMER.isOvertime()) {
+      GAME_OVER_TIMER.reset();
       GAME_STARTED = false;
     }
   }
@@ -390,7 +326,7 @@ void draw() {
   if (!GAME_STARTED) {
     drawTitleScreen();
   } else {
-    drawBackground();
+    BACKDROP.drawBackground();
     drawHealthBar();
     drawScoreAndLevel();
     drawUserResources();

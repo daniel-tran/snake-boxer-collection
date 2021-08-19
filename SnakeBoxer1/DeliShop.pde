@@ -8,9 +8,7 @@ class DeliShop {
   PImage imgDestroyed;
   float imgWidth;
   float imgHeight;
-  int recoveryFlashTimer = 0;
-  int recoveryFlashTimerInc = 5;
-  int recoveryFlashTimerMax = 10;
+  Timer recoveryFlashTimer = new Timer(1, 2, true);
   int recoveryFlashCount = 0;
   int recoveryFlashCountMax = 10;
   PImage imgDestroyedFlash = loadImage("Empty.png");
@@ -40,10 +38,9 @@ class DeliShop {
   
   void drawDestroyedImage() {
     if (recoveryFlashCount < recoveryFlashCountMax) {
-      recoveryFlashTimer += recoveryFlashTimerInc;
-      if (recoveryFlashTimer >= recoveryFlashTimerMax) {
+      recoveryFlashTimer.tick();
+      if (recoveryFlashTimer.isOvertime()) {
         recoveryFlashCount++;
-        recoveryFlashTimer = 0;
   
         // Sprite flashing is done by switching between the idle and empty
         // images, leveraging much of the existing draw logic.
