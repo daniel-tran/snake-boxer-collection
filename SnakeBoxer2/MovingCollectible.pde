@@ -10,9 +10,7 @@ class MovingCollectible {
   boolean isCollected = false;
   int collectValue = 0;
   int collectValueBase = 100;
-  int collectedTimer = 0;
-  int collectedTimerInc = 1;
-  int collectedTimerMax = 15;
+  Timer collectedTimer = new Timer(1, 15, false);
   float speedXMultiplier = 1;
   float imgWidth;
   float imgHeight;
@@ -88,9 +86,9 @@ class MovingCollectible {
       text(collectionText, x, y);
       
       // Respawn item after a brief period
-      collectedTimer += collectedTimerInc;
-      if (collectedTimer >= collectedTimerMax) {
-        collectedTimer = 0;
+      collectedTimer.tick();
+      if (collectedTimer.isOvertime()) {
+        collectedTimer.reset();
         reset();
       }
     }

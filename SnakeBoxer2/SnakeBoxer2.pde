@@ -16,10 +16,6 @@ void setup() {
   
   UNIT_X = width * 0.01;
   UNIT_Y = UNIT_X;
-  FIGHTER_SPRITE_WIDTH = UNIT_X * 22;
-  FIGHTER_SPRITE_HEIGHT = UNIT_Y * 22;
-  COLLECTIBLE_SPRITE_WIDTH = FIGHTER_SPRITE_WIDTH * 0.35;
-  COLLECTIBLE_SPRITE_HEIGHT = FIGHTER_SPRITE_HEIGHT * 0.35;
   PLAYER_BOUNDARY_MIN_Y = height * 0.15;
   PLAYER_BOUNDARY_MAX_Y = height * 0.7;
   ENEMY_RESET_X = -UNIT_X;
@@ -33,27 +29,32 @@ void setupGame() {
   SCORE = 0;
   MAX_LEVEL_SCORE = SCORE;
   
-  String[] attacksNormal = {"characters/BoxerJoe/BoxerJoe_Attack1.png",
-                            "characters/BoxerJoe/BoxerJoe_Attack2.png"};
   PLAYER = new Fighter(width * 0.35, height * 0.45,
                        "characters/BoxerJoe/BoxerJoe_Idle.png",
                        "characters/BoxerJoe/BoxerJoe_Block.png",
                        "characters/BoxerJoe/BoxerJoe_Hurt.png",
-                       attacksNormal,
-                       FIGHTER_SPRITE_WIDTH, FIGHTER_SPRITE_HEIGHT);
+                       new String[]{
+                         "characters/BoxerJoe/BoxerJoe_Attack1.png",
+                         "characters/BoxerJoe/BoxerJoe_Attack2.png"
+                       },
+                       UNIT_X * 22, UNIT_Y * 22);
   // Attacking feels a bit slow for some reason
-  PLAYER.attack1TimerInc = 10;
+  PLAYER.attack1Timer.timeInc *= 2;
   ENEMIES = new MovingEnemy[16];
   COLLECTIBLES = new MovingCollectible[16];
   // Set the initial enemies using the difficulty increase function
   increaseDifficulty();
-  // Randomise the background
-  BACKDROP = new Background(-1, height * 0.15, UNIT_X);
+  // Randomise the background, but don't use the special backdrops
+  BACKDROP = new Background(0, height * 0.15, UNIT_X);
+  BACKDROP.selectBackground((int)random(BACKDROP.backgroundCount - 1));
 }
 
 void increaseDifficulty() {
-  String[] idleImages = {"characters/Snake/Snake_Idle.png",
-                         "characters/Snake/Snake_Idle2.png"};
+  // Number of enemies to add
+  int enemyInc = 4;
+  // Number of collectibles to add
+  int collectibleInc = 2;
+  
   float[] possibleX = {width + UNIT_X};
   // Possible Y coordinates for respawning is based on the height of the 
   // playable space split into separate lanes.
@@ -66,54 +67,62 @@ void increaseDifficulty() {
   }
   // Assign level dependent variables before incrementing the level
   // otherwise some enemies and collectibles won't be utilised
-  int firstEnemyIndex = LEVEL * ENEMY_INC;
-  int lastEnemyIndex = firstEnemyIndex + ENEMY_INC;
-  int firstCollectibleIndex = LEVEL * COLLECTIBLE_INC;
-  int lastCollectibleIndex = firstCollectibleIndex + COLLECTIBLE_INC;
+  int firstEnemyIndex = LEVEL * enemyInc;
+  int lastEnemyIndex = firstEnemyIndex + enemyInc;
+  int firstCollectibleIndex = LEVEL * collectibleInc;
+  int lastCollectibleIndex = firstCollectibleIndex + collectibleInc;
   LEVEL++;
   
   // Maximum level is when all enemies are utilised
   if (lastEnemyIndex < ENEMIES.length) {
     for (int i = firstEnemyIndex; i < lastEnemyIndex; i++) {
       // Set the spawn distance between each enemy
-      float initialOffsetX = (UNIT_X * 22) * i;
+      float initialOffsetX = PLAYER.imgWidth * i;
       possibleX[0] += initialOffsetX;
       float initialX = possibleX[(int)random(possibleX.length)];
       float initialY = possibleY[(int)random(possibleY.length)];
       ENEMIES[i] = new MovingEnemy(initialX, initialY,
                                    "characters/Snake/Snake_Hurt.png",
-                                   idleImages,
-                                   FIGHTER_SPRITE_WIDTH, FIGHTER_SPRITE_HEIGHT,
+                                   new String[]{
+                                     "characters/Snake/Snake_Idle.png",
+                                     "characters/Snake/Snake_Idle2.png"
+                                   },
+                                   PLAYER.imgWidth, PLAYER.imgHeight,
                                    possibleX, possibleY);
-      // Default enemy image alertnation speed is a bit slow
-      ENEMIES[i].imgMovingTimerMax *= 2;                                   
+      // Default enemy image alternation speed is a bit slow
+      ENEMIES[i].imgMovingTimer.timeMax *= 2;                                   
     }
   }
 
   if (lastCollectibleIndex < COLLECTIBLES.length) {
     for (int i = firstCollectibleIndex; i < lastCollectibleIndex; i++) {
       // Set the spawn distance between each collectible
-      float initialOffsetX = (UNIT_X * 22) * i;
+      float initialOffsetX = PLAYER.imgWidth * i;
       possibleX[0] += initialOffsetX;
       float initialX = possibleX[(int)random(possibleX.length)];
       float initialY = possibleY[(int)random(possibleY.length)];
+      float collectibleSizeFactor = 0.35;
       COLLECTIBLES[i] = new MovingCollectible(initialX, initialY,
                                             possibleX, possibleY,
                                             FILENAMES_POSITIVE, FILENAMES_NEGATIVE,
-                                            COLLECTIBLE_SPRITE_WIDTH, COLLECTIBLE_SPRITE_HEIGHT);
+                                            PLAYER.imgWidth * collectibleSizeFactor,
+                                            PLAYER.imgHeight * collectibleSizeFactor);
     }
   }
 }
 
 void speedUpEnemies() {
+  float enemySpeedUpFactor = 1.25;
+  float collectibleSpeedUpFactor = enemySpeedUpFactor;
+  
   for (int i = 0; i < ENEMIES.length; i++) {
     if (ENEMIES[i] != null) {
-      ENEMIES[i].speedXMultiplier *= ENEMY_SPEED_UP_FACTOR;
+      ENEMIES[i].speedXMultiplier *= enemySpeedUpFactor;
     }
   }
   for (int i = 0; i < COLLECTIBLES.length; i++) {
     if (COLLECTIBLES[i] != null) {
-      COLLECTIBLES[i].speedXMultiplier *= COLLECTIBLE_SPEED_UP_FACTOR;
+      COLLECTIBLES[i].speedXMultiplier *= collectibleSpeedUpFactor;
     }
   }
 }
@@ -154,7 +163,7 @@ void registerPlayerAttack() {
     
     if (!PLAYER.isPlayable()) {
       // User can quickly start a new game instead of waiting for the timer to finish  
-      GAME_OVER_TIMER = GAME_OVER_TIMER_MAX;
+      GAME_OVER_TIMER.time = GAME_OVER_TIMER.timeMax;
     }
   } else {
     GAME_STARTED = true;
@@ -163,39 +172,24 @@ void registerPlayerAttack() {
 }
 
 Fighter PLAYER;
-MovingEnemy[] ENEMIES;
-int ENEMY_INC = 4;
-float ENEMY_SPEED_UP_FACTOR = 1.25;
-int ENEMY_SCORE_INCREMENT = 50;
-int ENEMY_SCORE_DECREMENT = -50; 
+MovingEnemy[] ENEMIES; 
 MovingCollectible[] COLLECTIBLES;
-int COLLECTIBLE_INC = 2;
-float COLLECTIBLE_SPEED_UP_FACTOR = 1.25;
 float UNIT_X;
 float UNIT_Y;
 float PLAYER_BOUNDARY_MIN_Y;
 float PLAYER_BOUNDARY_MAX_Y;
 float ENEMY_RESET_X;
-float FIGHTER_SPRITE_WIDTH;
-float FIGHTER_SPRITE_HEIGHT;
-float COLLECTIBLE_SPRITE_WIDTH;
-float COLLECTIBLE_SPRITE_HEIGHT;
-int DAMAGE = 5;
 int SCORE;
 int LEVEL;
-int[] LEVEL_BOUNDARIES = {500, 1000, 2000};
 int MAX_LEVEL_SCORE;
-int MAX_LEVEL_SCORE_BOUNDARY = 1000;
-int GAME_OVER_TIMER = 0;
-int GAME_OVER_TIMER_INC = 1;
-int GAME_OVER_TIMER_MAX = 120;
+Timer GAME_OVER_TIMER = new Timer(1, 120, false);
 boolean GAME_STARTED = false;
 PImage SNAKE_BOXER_LOGO;
 PImage SNAKE_BOXER_SNAKE;
 String[] FILENAMES_POSITIVE = {"items/Strawberry.png",
-                                "items/Beer.png",
-                                "items/RoastPig.png",
-                                "items/Egg.png"};
+                               "items/Beer.png",
+                               "items/RoastPig.png",
+                               "items/Egg.png"};
 String[] FILENAMES_NEGATIVE = {"items/Arrow.png",
                                "items/Bomb.png"};
 PImage[] SHOWCASE_COLLECTIBLES_POSITIVE;
@@ -239,33 +233,28 @@ void drawTitleScreen() {
   }
 }
 
-void drawBackground() {
-  BACKDROP.drawBackground();
-}
-
 void drawJoystick() {
   float joystickX = width * 0.1;
   float joystickY = height * 0.9;
   float joystickTiltedX = joystickX;
   float joystickTiltedY = joystickY;
-  float joystickDistance = UNIT_X * 8;
+  float joystickDistance = UNIT_X * 5;
 
   // Draw base joystick area
   fill(192);
   ellipse(width * 0.1, height * 0.9, UNIT_X * 15, UNIT_Y * 15);
 
   if (mousePressed && PLAYER.isPlayable()) {
-    if (abs(joystickX - mouseX) <= joystickDistance &&
-        abs(joystickY - mouseY) <= joystickDistance) {
-      joystickTiltedX = mouseX;
-      joystickTiltedY = mouseY;
-      if (!PLAYER.isUsingHurtImage()) {
-        // Scale the increment to vary the player's speed relative to the joystick
-        PLAYER.x += (mouseX - joystickX) * 0.25;
-        PLAYER.y += (mouseY - joystickY) * 0.25;
-        keepPlayerInBoundaries();
-      }
-    }
+    // Keep the joystick within the disk area, but allow the user to pull it an arbitrary distance
+    joystickTiltedX = min(max(mouseX, joystickX - joystickDistance), joystickX + joystickDistance);
+    joystickTiltedY = min(max(mouseY, joystickY - joystickDistance), joystickY + joystickDistance);
+    if (!PLAYER.isUsingHurtImage()) {
+      // Scale the increment to vary the player's speed relative to the joystick
+      float speedFactor = 0.25;
+      PLAYER.x += (mouseX - joystickX) * speedFactor;
+      PLAYER.y += (mouseY - joystickY) * speedFactor;
+      keepPlayerInBoundaries();
+    }    
   }
   // Draw the joystick, either tilted in the direction of movement
   // or in its default position
@@ -311,6 +300,8 @@ void keepPlayerInBoundaries() {
 }
 
 void drawEnemies() {
+  int enemyScoreIncrement = 50;
+
   for (int i = 0; i < ENEMIES.length; i++) {
     // Ignore enemies that haven't been loaded, since the level is too low
     if (ENEMIES[i] == null) {
@@ -333,11 +324,11 @@ void drawEnemies() {
           PLAYER.y <= ENEMIES[i].y + (UNIT_Y * 4) &&
           PLAYER.y >= ENEMIES[i].y - (UNIT_Y * 4);
     if (!ENEMIES[i].isRecoveryFlashing && !PLAYER.isUsingHurtImage()) {
-      if (contactZone) {
+      if (contactZone) {        
         // Player collided with the enemy with the possibility of defeating them
         if (PLAYER.isUsingAttackImage()) {
           ENEMIES[i].startHurt();
-          registerScore(ENEMY_SCORE_INCREMENT);
+          registerScore(enemyScoreIncrement);
         } else if (!ENEMIES[i].isRecoveryFlashing) {
           registerPlayerHurt(i);
         }
@@ -383,32 +374,38 @@ void drawCollectibles() {
 }
 
 void damagePlayer() {
-  // Amplified damage in later levels means higher probablility of losing 
-  PLAYER.startHurt(DAMAGE * LEVEL);
+  // Amplified damage in later levels means higher probablility of losing
+  int damage = 5;
+  PLAYER.startHurt(damage * LEVEL);
 }
 
 void registerPlayerHurt(int enemyIndex) {
-  registerScore(ENEMY_SCORE_DECREMENT);
+  int enemyScoreDecrement = -50;
+  
+  registerScore(enemyScoreDecrement);
   ENEMIES[enemyIndex].reset();
   damagePlayer();
 }
 
 void registerScore(int points) {
+  int[] levelBoundaries = {500, 1000, 2000};
+  int maxLevelScoreBoundary = 1000;
+
   SCORE += points;
-  if (LEVEL >= LEVEL_BOUNDARIES.length) {
+  if (LEVEL >= levelBoundaries.length) {
     // Max level score is used to determine when a level up occurs after the
     // player has reached the level where all enemies and collectibles are utilised
     MAX_LEVEL_SCORE += points;
   }
   
-  if (LEVEL < LEVEL_BOUNDARIES.length) {
+  if (LEVEL <= levelBoundaries.length) {
     // Level up based on the required score
-    if (LEVEL > 0 && SCORE >= LEVEL_BOUNDARIES[LEVEL - 1]) {
+    if (LEVEL > 0 && SCORE >= levelBoundaries[LEVEL - 1]) {
       increaseDifficulty();
       speedUpEnemies();
     }
   } else {
-    if (MAX_LEVEL_SCORE >= MAX_LEVEL_SCORE_BOUNDARY) {
+    if (MAX_LEVEL_SCORE >= maxLevelScoreBoundary) {
       // Any leftover points beyond the score boundary don't count to the next level up 
       MAX_LEVEL_SCORE = 0;
       // Manually increase the level counter, as the regular
@@ -422,9 +419,9 @@ void registerScore(int points) {
 void checkGameOverTimer() {
   // Pause for a brief period after a game over, then reset the game
   if (!PLAYER.isPlayable()) {
-    GAME_OVER_TIMER += GAME_OVER_TIMER_INC;
-    if (GAME_OVER_TIMER >= GAME_OVER_TIMER_MAX) {
-      GAME_OVER_TIMER = 0;
+    GAME_OVER_TIMER.tick();
+    if (GAME_OVER_TIMER.isOvertime()) {
+      GAME_OVER_TIMER.reset();
       GAME_STARTED = false;
       setupGame();
     }
@@ -435,7 +432,7 @@ void draw() {
   if (!GAME_STARTED) {
     drawTitleScreen();
   } else {
-    drawBackground();
+    BACKDROP.drawBackground();
     drawPlayer();
     drawHealthBars();
     drawScoreAndLevel();

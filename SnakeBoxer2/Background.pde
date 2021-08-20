@@ -1,7 +1,11 @@
 class Background {
   // 1 background iteration = no repeating background
   int backgroundIterations = 1;
-  int backgroundCount = 6;
+  int backgroundCount = 7;
+  // Special backgrounds are those that require additional components than just a sky area.
+  // Each special background is only drawn when the index matches a certain number.
+  // A negative number indicatse that no special background is being drawn.
+  int backgroundSpecialIndex = -1;
   float horizonHeight;
   float horizonWidthInc;
   float skyStripesHeight;
@@ -108,7 +112,7 @@ class Background {
   void selectBackground(int backgroundIndex) {
     switch(backgroundIndex) {
       case 0:
-      // City
+        // City
         setMainColour(184, 184, 184, false);
         setHeightFactorsColour(153, 204, 153);
         heightFactors = heightFactorsCity;
@@ -152,9 +156,18 @@ class Background {
         backgroundIterations = 2;
         break;
       default:
-        skyStripes = new int[0][0];
-        heightFactors = new float[0];
-        backgroundIterations = 0;
+        // Special background (see drawBackgroundSpecial for each mapping)
+        backgroundSpecialIndex = backgroundIndex;
+        break;
+    }
+  }
+  
+  void drawBackgroundSpecial() {
+    switch(backgroundSpecialIndex) {
+      case 6:
+        drawBoxingStadiuim();
+        break;
+      default:
         break;
     }
   }
@@ -175,6 +188,14 @@ class Background {
   }
   
   void drawBackground() {
+    if (backgroundSpecialIndex < 0) {
+      drawBackgroundRegular();
+    } else {
+      drawBackgroundSpecial();
+    }
+  }
+  
+  void drawBackgroundRegular() {
     rectMode(CORNERS);
     // Draw the main background
     background(mainColour.get("R"), mainColour.get("G"), mainColour.get("B"));
@@ -208,5 +229,53 @@ class Background {
       }
     }
     noStroke();
+  }
+  
+  void drawBoxingStadiuim() {
+    float localUnitX = width * 0.01;
+    float localUnitY = localUnitX;
+    float mainStageX = width * 0.3;
+    float mainStageY = height * 0.2;
+    float mainStageWidth = width * 0.35;
+    float mainStageHeight = height * 0.5;
+  
+    // Background colour outside of the stage area
+    background(0);
+  
+    // Main stage
+    fill(204);
+    rect(mainStageX, mainStageY, mainStageWidth, mainStageHeight);
+    
+    fill(255);
+    // Horizontal fencing
+    float leftmostFenceX = mainStageX - (localUnitX * 2);
+    float rightmostFenceX = mainStageX + mainStageWidth + localUnitX;
+    rect(leftmostFenceX, mainStageY, localUnitX, mainStageHeight);
+    rect(rightmostFenceX, mainStageY, localUnitX, mainStageHeight);
+    // Vertical fencing
+    float topmostFenceY = mainStageY - (localUnitY * 2); 
+    float bottommostFenceY = mainStageY + mainStageHeight + localUnitY;
+    rect(mainStageX, topmostFenceY, mainStageWidth, localUnitY);
+    rect(mainStageX, bottommostFenceY, mainStageWidth, localUnitY);
+         
+    // Diagonal fencing
+    for (int i = 0; i < 4; i++) {
+      // Split increments into separate variables, if we ever want to skew the diagonal fencing
+      float incrementX = localUnitX * i;
+      float incrementY = localUnitY * i;
+      
+      // Top left
+      rect(leftmostFenceX + incrementX, topmostFenceY + incrementY,
+         localUnitX, localUnitY);
+      // Top right
+      rect(rightmostFenceX - incrementX, topmostFenceY + incrementY,
+           localUnitX, localUnitY);
+      // Bottom right
+      rect(rightmostFenceX - incrementX, bottommostFenceY - incrementY,
+           localUnitX, localUnitY);
+      // Bottom left
+      rect(leftmostFenceX + incrementX, bottommostFenceY - incrementY,
+           localUnitX, localUnitY);
+    }
   }
 }
