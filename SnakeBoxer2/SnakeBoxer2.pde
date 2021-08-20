@@ -47,6 +47,8 @@ void setupGame() {
   // Randomise the background, but don't use the special backdrops
   BACKDROP = new Background(0, height * 0.15, UNIT_X);
   BACKDROP.selectBackground((int)random(BACKDROP.backgroundCount - 1));
+  // Joystick is not being used upon game start
+  resetJoystick();
 }
 
 void increaseDifficulty() {
@@ -139,6 +141,10 @@ void mousePressed() {
   registerPlayerAttack();
 }
 
+void mouseReleased() {
+  resetJoystick();
+}
+
 void touchStarted() {
   // This is a special in-built function that is only called when touching the
   // screen while running on an Android device.
@@ -195,6 +201,7 @@ String[] FILENAMES_NEGATIVE = {"items/Arrow.png",
 PImage[] SHOWCASE_COLLECTIBLES_POSITIVE;
 PImage[] SHOWCASE_COLLECTIBLES_NEGATIVE;
 Background BACKDROP;
+boolean JOYSTICK_ACTIVE;
 
 void drawTitleScreen() {
   background(49, 52, 74);
@@ -233,19 +240,31 @@ void drawTitleScreen() {
   }
 }
 
+void resetJoystick() {
+  JOYSTICK_ACTIVE = false;
+}
+
 void drawJoystick() {
   float joystickX = width * 0.1;
   float joystickY = height * 0.9;
   float joystickTiltedX = joystickX;
   float joystickTiltedY = joystickY;
-  float joystickDistance = UNIT_X * 5;
+  float joystickDistance = UNIT_X * 6;
 
   // Draw base joystick area
   fill(192);
   ellipse(width * 0.1, height * 0.9, UNIT_X * 15, UNIT_Y * 15);
 
-  if (mousePressed && PLAYER.isPlayable()) {
-    // Keep the joystick within the disk area, but allow the user to pull it an arbitrary distance
+  // The joystick must be pulled from within the disk area, but can be pulled to an arbitrary distance
+  // until the screen press is released.
+  if (!JOYSTICK_ACTIVE) {
+    JOYSTICK_ACTIVE = mousePressed &&
+                      abs(joystickX - mouseX) <= joystickDistance &&
+                      abs(joystickY - mouseY) <= joystickDistance;
+  }
+
+  if (JOYSTICK_ACTIVE && PLAYER.isPlayable()) {
+    // Keep the joystick within the disk area, but results in a square-shaped bounding box
     joystickTiltedX = min(max(mouseX, joystickX - joystickDistance), joystickX + joystickDistance);
     joystickTiltedY = min(max(mouseY, joystickY - joystickDistance), joystickY + joystickDistance);
     if (!PLAYER.isUsingHurtImage()) {
