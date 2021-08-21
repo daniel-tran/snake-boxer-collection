@@ -17,9 +17,7 @@ class MinigameMatch extends MinigameManager {
   int gridSecondChoiceX;
   int gridSecondChoiceY;
   boolean isResettingGridSelection = false;
-  float gridSelectionTimer = 0;
-  float gridSelectionTimerInc = 1;
-  float gridSelectionTimerMax = 30;
+  Timer gridSelectionTimer = new Timer(1, 30, false);
   
   float gridInitialX = width * 0.05;
   float gridInitialY = height * 0.1;
@@ -218,9 +216,9 @@ class MinigameMatch extends MinigameManager {
   void processGridSelectionReset() {
     if (isResettingGridSelection) {
       // Player is being delayed for selecting non-matching prizes
-      gridSelectionTimer += gridSelectionTimerInc;
-      if (gridSelectionTimer >= gridSelectionTimerMax) {
-        gridSelectionTimer = 0;
+      gridSelectionTimer.tick();
+      if (gridSelectionTimer.isOvertime()) {
+        gridSelectionTimer.reset();
         gridFirstChoiceX = 0;
         gridFirstChoiceY = 0;
         gridSecondChoiceX = 0;
