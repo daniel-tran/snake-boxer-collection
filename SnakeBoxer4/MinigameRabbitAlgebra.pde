@@ -12,25 +12,25 @@ class MinigameRabbitAlgebra extends MinigameManager {
   int onesValue = 0;
   float onesX = width * 0.5;
   float onesY = height * 0.75;
-  float onesUpX = onesX;
-  float onesUpY = onesY - (localUnitY * 10);
-  float onesDownX = onesX;
-  float onesDownY = onesY + (localUnitY * 5);
+  float onesButtonWidth = buttonWidth * 2;
+  float onesButtonHeight = buttonWidth * 2;
   int tensValue = 0;
   float tensX = onesX - (localUnitX * 9);
   float tensY = onesY;
-  float tensUpX = tensX;
-  float tensUpY = tensY - (localUnitY * 10);
-  float tensDownX = tensX;
-  float tensDownY = tensY + (localUnitY * 5);
-  float equalsX = onesX + (localUnitX * 9);
-  float equalsY = onesY - (localUnitY * 3);
-  float equalsButtonWidth = buttonWidth * 1.5;
-  float equalsButtonHeight = buttonHeight * 1.5;
+  float tensButtonWidth = onesButtonWidth;
+  float tensButtonHeight = onesButtonHeight;
+  ClickableButton tensUpButton = new ClickableButton(tensX, tensY - (localUnitY * 10),
+                                                     tensButtonWidth, tensButtonHeight);
+  ClickableButton tensDownButton = new ClickableButton(tensX, tensY + (localUnitY * 5),
+                                                     tensButtonWidth, tensButtonHeight);
+  ClickableButton onesUpButton = new ClickableButton(onesX, onesY - (localUnitY * 10),
+                                                     onesButtonWidth, onesButtonHeight);
+  ClickableButton onesDownButton = new ClickableButton(onesX, onesY + (localUnitY * 5),
+                                                     onesButtonWidth, onesButtonHeight);
+  ClickableButton equalsButton = new ClickableButton(onesX + (localUnitX * 9), onesY - (localUnitY * 3),
+                                                     buttonWidth * 3, buttonHeight * 3);
   boolean showRetryMessage = false;
-  float retryTimer = 0;
-  float retryTimerInc = 1;
-  float retryTimerMax = 60;
+  Timer retryTimer = new Timer(1, 60, false);
   
   int valueRangePositive = 100;
   int valueRangeNegative = -valueRangePositive;
@@ -49,6 +49,13 @@ class MinigameRabbitAlgebra extends MinigameManager {
     setText("", 255);
     // Instruction text is permanently displayed during play
     instructionTimer.time = instructionTimer.timeMax;
+    float buttonEqualsFontSize = localUnitX * 5;
+    float buttonUpDownFontSize = localUnitX * 3;
+    equalsButton.setButtonText("=", buttonEqualsFontSize);
+    onesUpButton.setButtonText("+", buttonUpDownFontSize);
+    onesDownButton.setButtonText("-", buttonUpDownFontSize);
+    tensUpButton.setButtonText("+", buttonUpDownFontSize);
+    tensDownButton.setButtonText("-", buttonUpDownFontSize);
   }
   
   void drawMinigame() {
@@ -124,9 +131,9 @@ class MinigameRabbitAlgebra extends MinigameManager {
       // Show retry message, which onlys shows temporarily
       fill(255, 127, 39);
       blurbText = "TRY AGAIN";
-      retryTimer += retryTimerInc;
-      if (retryTimer >= retryTimerMax) {
-        retryTimer = 0;
+      retryTimer.tick();
+      if (retryTimer.isOvertime()) {
+        retryTimer.reset();
         showRetryMessage = false;
       }
     } else if (enableLoseTimer) {
@@ -142,32 +149,18 @@ class MinigameRabbitAlgebra extends MinigameManager {
   
   void drawNumberSelectionUI () {
     fill(255);
-    // Draw the tens value
+    // Draw the values.
+    // Keep these drawings together so we don't have to keep switching font settings unnecessarily after drawing the buttons
     text(tensValue, tensX, tensY);
-    // Draw the button to increase the tens value
-    triangle(tensUpX, tensUpY - buttonHeight,
-             tensUpX + buttonWidth, tensUpY + buttonHeight,
-             tensUpX - buttonWidth, tensUpY + buttonHeight);
-    // Draw the button to decrease the tens value
-    triangle(tensDownX, tensDownY + buttonHeight,
-             tensDownX + buttonWidth, tensDownY - buttonHeight,
-             tensDownX - buttonWidth, tensDownY - buttonHeight);
-    // Draw the ones value
     text(onesValue, onesX, onesY);
-    // Draw the button to increase the ones value
-    triangle(onesUpX, onesUpY - buttonHeight,
-             onesUpX + buttonWidth, onesUpY + buttonHeight,
-             onesUpX - buttonWidth, onesUpY + buttonHeight);
-    // Draw the button to decrease the ones value
-    triangle(onesDownX, onesDownY + buttonHeight,
-             onesDownX + buttonWidth, onesDownY - buttonHeight,
-             onesDownX - buttonWidth, onesDownY - buttonHeight);
+    // Draw the buttons to modify the tens value
+    tensUpButton.drawButton();
+    tensDownButton.drawButton();
+    // Draw the buttons to modify the ones value
+    onesUpButton.drawButton();
+    onesDownButton.drawButton();
     // Draw the equals button and its symbol on top
-    fill(128);
-    rect(equalsX, equalsY, equalsButtonWidth * 2, equalsButtonHeight * 2);
-    fill(255);
-    // Equals button should align with the displayed numbers, at least on the Y axis
-    text("=", equalsX, onesY);
+    equalsButton.drawButton();
   }
   
   void drawRabbit() {
@@ -213,37 +206,28 @@ class MinigameRabbitAlgebra extends MinigameManager {
       offsetSymbol = '+';
     }
     fill(0);
+    textAlign(CENTER);
     text(xMultiplier + "x " + offsetSymbol + " " + abs(offsetValue) + " = " + finalValue, equationX, equationY);
   }
   
   void screenPressed() {
-    boolean onesUpWasPressed = hasPressedArea(onesUpX, onesUpY,
-                                              buttonWidth, buttonHeight);
-    boolean onesDownWasPressed = hasPressedArea(onesDownX, onesDownY,
-                                              buttonWidth, buttonHeight);                                          
-    if (onesUpWasPressed) {
+    if (onesUpButton.isPressed(mouseX, mouseY)) {
       // Loop back to 0 if exceeding 9
       onesValue = (onesValue + 1) % 10;
-    } else if (onesDownWasPressed) {
+    } else if (onesDownButton.isPressed(mouseX, mouseY)) {
       // Loop back to 9 if undercutting 0
       onesValue = (10 + (onesValue - 1)) % 10;
     }
-    
-    boolean tensUpWasPressed = hasPressedArea(tensUpX, tensUpY,
-                                              buttonWidth, buttonHeight);
-    boolean tensDownWasPressed = hasPressedArea(tensDownX, tensDownY,
-                                              buttonWidth, buttonHeight);                                        
-    if (tensUpWasPressed) {
+
+    if (tensUpButton.isPressed(mouseX, mouseY)) {
       // Loop back to 0 if exceeding 9
       tensValue = (tensValue + 1) % 10;
-    } else if (tensDownWasPressed) {
+    } else if (tensDownButton.isPressed(mouseX, mouseY)) {
       // Loop back to 9 if undercutting 0
       tensValue = (10 + (tensValue - 1)) % 10;
     }
-    
-    boolean equalsWasPressed = hasPressedArea(equalsX, equalsY,
-                                              equalsButtonWidth, equalsButtonHeight);
-    if (equalsWasPressed && !hasWon && !enableLoseTimer) {
+
+    if (equalsButton.isPressed(mouseX, mouseY) && !hasWon && !enableLoseTimer && !retryTimer.isActive()) {
       // If the x multiplier is 0, x can be any value for a correct equation
       if (getEnteredValue() == xValue || xIsMultipliedBy0()) {
         hasWon = true;
