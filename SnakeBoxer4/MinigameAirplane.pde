@@ -6,23 +6,17 @@ class MinigameAirplane extends MinigameManager {
   // Note that setting the enemy count above 5 or 6 can result in an OutOfMemoryError
   // when ending the game on mobile devices.
   MovingEnemy[] ducks = new MovingEnemy[5];
-  
-  float airplaneX = width * 0.15;
-  float airplaneY = height * 0.5;
-  PImage[] imgAirplaneIdle = {
-    loadImage("minigames/Airplane/AirplaneIdle1.png"),
-    loadImage("minigames/Airplane/AirplaneIdle2.png")
-  };
-  int airplaneIdleIndex = 0;
-  Timer airplaneIdleTimer = new Timer(1, 8, true);
-  /*
-  float airplaneIdleTimer = 0;
-  float airplaneIdleTimerInc = 1;
-  float airplaneIdleTimerMax = 8;
-  */
-  float imgAirplaneWidth = localUnitX * 44;
-  float imgAirplaneHeight = localUnitY * 44;
-  
+  // Airplane is a moving enemy just for the shifting idle images.
+  // Respawn coordinates are negligible, since this is not expected to respawn.
+  MovingEnemy airplane = new MovingEnemy(width * 0.15, height * 0.5,
+                                         "minigames/Airplane/AirplaneHurt.png",
+                                         new String[]{
+                                           "minigames/Airplane/AirplaneIdle1.png",
+                                           "minigames/Airplane/AirplaneIdle2.png"
+                                         },
+                                         localUnitX * 44, localUnitY * 44,
+                                         new float[]{0}, new float[]{0});
+
   MinigameAirplane(float localUnitWidth, float localUnitHeight) {
     super(localUnitWidth, localUnitHeight);
     setText("Duck!", 255);
@@ -44,6 +38,9 @@ class MinigameAirplane extends MinigameManager {
       ducks[i] = new MovingEnemy(duckX, duckY, imgEmpty, imgDuckMoving,
                                  duckWidth, duckHeight, new float[]{0}, new float[]{0});
     }
+
+    // When hurt, disable sprite flashing by massively extending the relevant timer
+    airplane.recoveryFlashTimer.timeMax *= 1000;
   }
   
   void drawMinigame() {
@@ -101,25 +98,13 @@ class MinigameAirplane extends MinigameManager {
       rect(localUnitX * i, horizonY + horizonStripeHeight, localUnitX * (i + 1), horizonY * hillHeights[i]);
     }
     noStroke();
-    
-    drawAirplane();
+
+    // Draw ducks before the airplane, as the visual effect for a head-on collision looks more sensible
     drawDucks();
+    airplane.drawImage();
+    airplane.processAction();
   }
-  
-  void drawAirplane() {
-    if (enableLoseTimer) {
-      tint(192, 0, 0);
-    }
-    image(imgAirplaneIdle[airplaneIdleIndex], airplaneX,  airplaneY, imgAirplaneWidth, imgAirplaneHeight);
-    noTint();
-    
-    // Flip through the airplane sprites
-    airplaneIdleTimer.tick();
-    if (airplaneIdleTimer.isOvertime()) {
-      airplaneIdleIndex = (airplaneIdleIndex + 1) % imgAirplaneIdle.length;
-    }
-  }
-  
+
   void drawDucks() {
     float duckStepSize = localUnitX * timerSpeedMultiplier;
     for (int i = 0; i < ducks.length; i++) {
@@ -132,21 +117,22 @@ class MinigameAirplane extends MinigameManager {
       // Hit detection is based a specific zone on the image where the airplane is actually drawn
       float airplaneRadiusX = localUnitX * 12;
       float airplaneRadiusY = localUnitY * 6;
-      boolean hasStruckAirplane = ducks[i].x <= airplaneX + airplaneRadiusX &&
-                                  ducks[i].x >= airplaneX - airplaneRadiusX &&
-                                  ducks[i].y <= airplaneY + airplaneRadiusY &&
-                                  ducks[i].y >= airplaneY - airplaneRadiusY;
+      boolean hasStruckAirplane = ducks[i].x <= airplane.x + airplaneRadiusX &&
+                                  ducks[i].x >= airplane.x - airplaneRadiusX &&
+                                  ducks[i].y <= airplane.y + airplaneRadiusY &&
+                                  ducks[i].y >= airplane.y - airplaneRadiusY;
       if (hasStruckAirplane) {
         enableLoseTimer = true;
+        airplane.startHurt();
       }
     }
   }
   
   void screenDragged() {
     // Player can drag the airplane as long as the approximate Y coordinate matches the screen press
-    float airplaneDragAreaY = imgAirplaneHeight * 0.25;
-    if (abs(mouseY - airplaneY) <= airplaneDragAreaY && !enableLoseTimer) {
-      airplaneY = min(mouseY, gameSpaceHeight);
+    float airplaneDragAreaY = airplane.imgHeight * 0.25;
+    if (abs(mouseY - airplane.y) <= airplaneDragAreaY && !enableLoseTimer) {
+      airplane.y = min(mouseY, gameSpaceHeight);
     }
   }
 }
