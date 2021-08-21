@@ -5,20 +5,18 @@ Tangerine Dreams:
 - Some icons might already be in their correct locations
 */
 class MinigameTangerineDreams extends MinigameManager {
-  PImage[] imgIcons = {
-    loadImage("minigames/TangerineDreams/SBEmail.png"),
-    loadImage("minigames/TangerineDreams/SoCoolAFlash.png"),
-    loadImage("minigames/TangerineDreams/TheCheatHD.png")
-  };
   PImage imgTangerineDreamsLogo = loadImage("minigames/TangerineDreams/TangerineDreamsLogo.png");
-  PImage[] imgIconsMissing = imgIcons;
-  float[][] imgIconsCoordinates = new float[imgIcons.length][2];
-  float[][] imgIconsMissingCoordinates = new float[imgIconsMissing.length][2];
   int iconSelectionIndex;
   IntList movedIcons = new IntList();
   float topBarHeight = height * 0.05;
   float topBarHeightBoundary = topBarHeight * 3;
-  float gameSpaceHeight = height * 0.8;
+  String[] iconsPathnames = {
+    "minigames/TangerineDreams/SBEmail.png",
+    "minigames/TangerineDreams/SoCoolAFlash.png",
+    "minigames/TangerineDreams/TheCheatHD.png"
+  };
+  ClickableButton[] icons = new ClickableButton[iconsPathnames.length];
+  ClickableButton[] iconsMissing = new ClickableButton[iconsPathnames.length];
   
   MinigameTangerineDreams(float localUnitWidth, float localUnitHeight) {
     super(localUnitWidth, localUnitHeight);
@@ -28,24 +26,24 @@ class MinigameTangerineDreams extends MinigameManager {
     
     // Ensure this value is always below the number of icons, as the player should
     // still be required to do something to win
-    int preMatchedIconsCount = (int)random(1, imgIcons.length);
-    for (int i = 0; i < imgIconsCoordinates.length; i++) {
-      // Random x,y position for the icon within the movable space
-      imgIconsCoordinates[i][0] = random(0, width);
-      imgIconsCoordinates[i][1] = random(topBarHeightBoundary, gameSpaceHeight);
-      
+    int preMatchedIconsCount = (int)random(1, icons.length);
+    float iconWidth = localUnitX * 16;
+    float iconHeight = localUnitY * 16;
+    for (int i = 0; i < icons.length; i++) {
+      icons[i] = new ClickableButton(random(0, width), random(topBarHeightBoundary, gameSpaceHeight),
+                                     iconWidth, iconHeight);
+      icons[i].setButtonImage(iconsPathnames[i]);
       boolean isPrematchedIcon = random(1) >= 0.5;
       if (isPrematchedIcon && preMatchedIconsCount > 0) {
-        // Pre-matched icon 
+        // Pre-matched icon
         preMatchedIconsCount--;
-        imgIconsMissingCoordinates[i][0] = imgIconsCoordinates[i][0];
-        imgIconsMissingCoordinates[i][1] = imgIconsCoordinates[i][1];
+        // No need to load an image, since it is overlapped by the proper icon anyway
+        iconsMissing[i] = new ClickableButton(icons[i].x, icons[i].y, 0, 0);
         registerIconMatch(i);
       } else {
-        // Icon slot is also randomly placed, and can also be in the same
-        // position as its corresponding icon, though this would be very rare.
-        imgIconsMissingCoordinates[i][0] = random(0, width);
-        imgIconsMissingCoordinates[i][1] = random(topBarHeightBoundary, gameSpaceHeight);
+        iconsMissing[i] = new ClickableButton(random(0, width), random(topBarHeightBoundary, gameSpaceHeight),
+                                              iconWidth, iconHeight);
+        iconsMissing[i].setButtonImage(iconsPathnames[i]);
       }
     }
   }
@@ -86,19 +84,16 @@ class MinigameTangerineDreams extends MinigameManager {
   }
   
   void drawIcons() {
-    float iconWidth = localUnitX * 16;
-    float iconHeight = localUnitY * 16;
-
     // Draw icon slots
     tint(0);
-    for (int i = 0; i < imgIconsCoordinates.length; i++) {
-      image(imgIconsMissing[i], imgIconsMissingCoordinates[i][0], imgIconsMissingCoordinates[i][1], iconWidth, iconHeight);
+    for (int i = 0; i < iconsMissing.length; i++) {
+      iconsMissing[i].drawButton();
     }
     
     // Draw icons after the slots so that it properly overlaps it
     noTint();
-    for (int i = 0; i < imgIconsCoordinates.length; i++) {
-      image(imgIcons[i], imgIconsCoordinates[i][0], imgIconsCoordinates[i][1], iconWidth, iconHeight);
+    for (int i = 0; i < icons.length; i++) {
+      icons[i].drawButton();
     }
   }
   
@@ -111,50 +106,47 @@ class MinigameTangerineDreams extends MinigameManager {
   }
   
   void screenPressed() {
-    float pressRadius = localUnitX * 5;
     // Traverse the icons in reverse order to achieve the effect where an icon that
     // is drawn above another will be detected first if both are within the same
     // press area
-    for (int i = imgIconsCoordinates.length - 1; i >= 0; i--) {
-      if (dist(mouseX, mouseY, imgIconsCoordinates[i][0], imgIconsCoordinates[i][1]) <= pressRadius &&
+    for (int i = icons.length - 1; i >= 0; i--) {
+      if (icons[i].isPressed(mouseX, mouseY) &&
           !movedIcons.hasValue(i)) {
         iconSelectionIndex = i;
         break;
       }
     }
   }
-  
+
   void screenReleased() {
     deselectIcon();
   }
-  
+
   void screenDragged() {
     float slotSnapRadius = localUnitX * 2;
-    
+
     if (iconSelectionIndex >= 0) {
       // X position doesn't need to be bound, as there are no inaccessible side zones
-      imgIconsCoordinates[iconSelectionIndex][0] = mouseX;
+      icons[iconSelectionIndex].x = mouseX;
       // Can't drag the icon past the toolbar or the timer UI.
       // But allow the icon to be dragged along the boundary line.
-      imgIconsCoordinates[iconSelectionIndex][1] = min(max(mouseY, topBarHeightBoundary), gameSpaceHeight);
-      
-      if (dist(imgIconsCoordinates[iconSelectionIndex][0],
-               imgIconsCoordinates[iconSelectionIndex][1],
-               imgIconsMissingCoordinates[iconSelectionIndex][0],
-               imgIconsMissingCoordinates[iconSelectionIndex][1]) <= slotSnapRadius &&
+      icons[iconSelectionIndex].y = min(max(mouseY, topBarHeightBoundary), gameSpaceHeight);
+
+      if (dist(icons[iconSelectionIndex].x, icons[iconSelectionIndex].y,
+               iconsMissing[iconSelectionIndex].x, iconsMissing[iconSelectionIndex].y) <= slotSnapRadius &&
           !movedIcons.hasValue(iconSelectionIndex)) {
-                 // Snap the icon into the slot
-                 imgIconsCoordinates[iconSelectionIndex][0] = imgIconsMissingCoordinates[iconSelectionIndex][0];
-                 imgIconsCoordinates[iconSelectionIndex][1] = imgIconsMissingCoordinates[iconSelectionIndex][1];
-                 registerIconMatch(iconSelectionIndex);
-                 deselectIcon();
-                 
-                 // Check if this is the last icon that needs to be moved
-                 if (!hasWon && movedIcons.size() >= imgIcons.length) {
-                   hasWon = true;
-                   enableWinTimer = true;
-                 }
-               }
+            // Snap the icon into the slot
+            icons[iconSelectionIndex].x = iconsMissing[iconSelectionIndex].x;
+            icons[iconSelectionIndex].y = iconsMissing[iconSelectionIndex].y;
+            registerIconMatch(iconSelectionIndex);
+            deselectIcon();
+
+            // Check if this is the last icon that needs to be moved
+            if (!hasWon && movedIcons.size() >= icons.length) {
+              hasWon = true;
+              enableWinTimer = true;
+            }
+         }
     }
   }
 }
