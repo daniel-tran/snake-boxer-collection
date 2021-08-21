@@ -3,14 +3,8 @@ class AIFighter extends Fighter {
   int directionYStationary = 0;
   int directionYDown = -1;
   int directionY = directionYDown; // 1 = up,  0 = stationary, -1 = down
-  int directionYSwitchTimer = 0;
-  int directionYSwitchTimerInc = 1;
-  int directionYSwitchTimerMax = 20;
-  int actionTimer = 0;
-  int actionTimerInc = 1;
-  int actionTimerMax = 30;
-  float chanceBlock = 0.4;
-  float chanceAttack = 0.75;
+  Timer directionYSwitchTimer = new Timer(1, 30, true);
+  Timer actionTimer = new Timer(1, 30, true);
   float chanceChangeDirection = 0.5;
   
   AIFighter(float initialX, float initialY, String filenameIdle, String filenameBlock,
@@ -20,9 +14,12 @@ class AIFighter extends Fighter {
           filenameHurt, filenamesAttackNormal, spriteWidth, spriteHeight);
   }
   
+  AIFighter(float initialX, float initialY, float spriteWidth, float spriteHeight, String presetName) {
+    super(initialX, initialY, spriteWidth, spriteHeight, presetName);
+  }
+  
   void resetToIdle() {
     super.resetToIdle();
-    directionYSwitchTimer = 0;
     // Resume movement by selecting a random direction to go in
     float directionChance = random(0, 1);
     if (directionChance >= 0.5) {
@@ -52,14 +49,14 @@ class AIFighter extends Fighter {
     // Remove the condition to enable constant blocking on non-stop attacks
     if (isUsingHurtImage()){
       stopMovementTemporarily();
-      actionTimer = 0;
+      actionTimer.reset();
     }
   }
   
   void stopMovementTemporarily() {
     // Enemy should not be able to move when doing certain actions
     directionY = directionYStationary;
-    directionYSwitchTimer = -actionTimerMax;
+    directionYSwitchTimer.setTime(-directionYSwitchTimer.timeMax);
   }
   
   void defaultDirectionSwitch(float playerMinX, float playerMaxX,
@@ -74,9 +71,9 @@ class AIFighter extends Fighter {
       }
     }
     
-    directionYSwitchTimer += directionYSwitchTimerInc;
-    if (directionYSwitchTimer >= directionYSwitchTimerMax) {
-      directionYSwitchTimer = (int)random(-20, 1);
+    directionYSwitchTimer.tick();
+    if (directionYSwitchTimer.isOvertime()) {
+      directionYSwitchTimer.setTime((int)random(-20, 1));
       
       // Enemy might change direction, or continue in the same direction
       float chanceToChangeDirection = random(0, 1);
@@ -90,11 +87,27 @@ class AIFighter extends Fighter {
     }
   }
   
-  void decideAction() {
-    actionTimer += actionTimerInc;
-    if (actionTimer >= actionTimerMax && isPlayable()) {
-      actionTimer = 0;
+  void decideAction() {    
+    actionTimer.tick();
+    // An action should only be made when the fighter is actually
+    // available to make a next move.
+    if (actionTimer.isOvertime() && isPlayable() && !isUsingHurtImage()) {
       float chance = random(0, 1);
+      float chanceBlock = 0.4;
+      float chanceAttack = 0.75;
+      float chanceAttackSpecial = random(0.5);
+      
+      // First priority is the special attack, since it requires a charge-up.
+      // Use return to ensure the special attack and charge-up are
+      // mutually exclusive to the regular actions.
+      if (chance >= chanceAttackSpecial && isChargedForSpecialAttack()) {
+        startSpecialAttack();
+        return;
+      } else if (useSpecialAttack && isUsingBlockImage()) {
+        // Continue blocking to delay the special attack
+        startBlock();
+        return;
+      }
       
       // Condition sequence indicates action preferencce
       if (chance >= chanceAttack) {

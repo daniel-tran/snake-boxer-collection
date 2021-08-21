@@ -11,44 +11,51 @@ void setup() {
   ZONE_BLOCK = width * 0.8;
   ZONE_MOVE_UP = height * 0.5;
   ZONE_MOVE_DOWN = height * 0.5;
-  
+
   SNAKE_BOXER_LOGO = loadImage("titlescreen/SnakeBoxer_Logo.png");
   SNAKE_BOXER_SNAKE = loadImage("titlescreen/SnakeBoxer_Snake.png");
+  
+  // The boxing stadium background is a special background,
+  // and does not make use of some initial parameters.
+  BACKDROP = new Background(6, 0, 0);
 }
 
 PImage SNAKE_BOXER_LOGO;
 PImage SNAKE_BOXER_SNAKE;
 boolean GAME_STARTED = false;
-float UNIT_X = 24;
-float UNIT_Y = UNIT_X;
+float UNIT_X;
+float UNIT_Y;
 float ZONE_ATTACK;
 float ZONE_BLOCK;
 float ZONE_MOVE_UP;
 float ZONE_MOVE_DOWN;
-int GAME_OVER_TIMER = 0;
-int GAME_OVER_TIMER_INC = 1;
-int GAME_OVER_TIMER_MAX = 120;
+Timer GAME_OVER_TIMER = new Timer(1, 120, false);
 
 Fighter PLAYER;
 AIFighter ENEMY;
+Background BACKDROP;
 
 void setupPlayers() {
-  String[] attacksNormal = {"characters/BoxerJoe/BoxerJoe_Attack1.png",
-                            "characters/BoxerJoe/BoxerJoe_Attack2.png"};
   PLAYER = new Fighter(width * 0.55, height * 0.45,
                        "characters/BoxerJoe/BoxerJoe_Idle.png",
                        "characters/BoxerJoe/BoxerJoe_Block.png",
                        "characters/BoxerJoe/BoxerJoe_Hurt.png",
-                       attacksNormal,
+                       new String[] {
+                         "characters/BoxerJoe/BoxerJoe_Attack1.png",
+                         "characters/BoxerJoe/BoxerJoe_Attack2.png"
+                       },
                        UNIT_X * 22, UNIT_Y * 22);
   PLAYER.setLives(3);
+  PLAYER.isFlippedX = true;
   
-  String[] attacksSnake = {"characters/Snake/Snake_Attack1.png"};
-  ENEMY = new AIFighter(width * 0.425, height * 0.45,
+  ENEMY = new AIFighter(width * 0.425, PLAYER.y,
                        "characters/Snake/Snake_Idle.png",
                        "characters/Snake/Snake_Block.png",
-                       "characters/Snake/Snake_Hurt.png", attacksSnake,
-                       UNIT_X * 22, UNIT_Y * 22);
+                       "characters/Snake/Snake_Hurt.png",
+                       new String[] {
+                         "characters/Snake/Snake_Attack1.png"
+                       },
+                       PLAYER.imgWidth, PLAYER.imgHeight);
   ENEMY.setLives(Integer.MAX_VALUE);
   ENEMY.randomiseTintOnLifeRecovery = true;
 }
@@ -60,62 +67,11 @@ void drawTitleScreen() {
   image(SNAKE_BOXER_LOGO, width * 0.5, height * 0.25, UNIT_X * 60, UNIT_Y * 30);
   image(SNAKE_BOXER_SNAKE, width * 0.7, height * 0.75 + UNIT_Y, UNIT_X * 18, UNIT_Y * 27);
   
+  textAlign(LEFT);
   textSize(UNIT_X * 2);
   fill(255);
   text("USE THE SCREEN!\n\nTOUCH UP/DOWN= MOVE\nTOUCH RIGHT= BLOCK\nTOUCH LEFT= PUNCH\n\nTOUCH= START",
        width * 0.22, height * 0.6);
-}
-
-void drawStage() {
-  float mainStageX = width * 0.3;
-  float mainStageY = height * 0.25 - (UNIT_Y * 4);
-  float mainStageWidth = width * 0.35;
-  float mainStageHeight = height * 0.5;
-
-  // Background colour outside of the stage area
-  background(0);
-
-  // Main stage
-  fill(204);
-  rect(mainStageX, mainStageY, mainStageWidth, mainStageHeight);
-  
-  fill(255);
-  // Horizontal fencing
-  float rightmostFenceX = mainStageX + mainStageWidth + UNIT_X;
-  rect(mainStageX - (UNIT_X * 2), mainStageY, UNIT_X, mainStageHeight);
-  rect(rightmostFenceX, mainStageY, UNIT_X, mainStageHeight);
-  // Vertical fencing
-  float topmostFenceY = mainStageY - (UNIT_Y * 2); 
-  rect(mainStageX, topmostFenceY, mainStageWidth, UNIT_Y);
-  rect(mainStageX, mainStageY + mainStageHeight + UNIT_Y, mainStageWidth, UNIT_Y);
-       
-  // Diagonal fencing
-  for (int i = 0; i < 4; i++) {
-    // Split increments into separate variables, if we ever want to skew the diagonal fencing
-    float incrementX = UNIT_X * i;
-    float incrementY = UNIT_Y * i;
-    
-    // Top left
-    rect(mainStageX - (UNIT_X * 2) + incrementX, mainStageY - (UNIT_Y * 2) + incrementY,
-       UNIT_X, UNIT_Y);
-    // Top right
-    rect(mainStageX + mainStageWidth + UNIT_X - incrementX, mainStageY - (UNIT_Y * 2) + incrementY,
-         UNIT_X, UNIT_Y);
-    // Bottom right
-    rect(mainStageX + mainStageWidth + UNIT_X - incrementX, mainStageY + mainStageHeight + UNIT_Y - incrementY,
-         UNIT_X, UNIT_Y);
-    // Bottom left
-    rect(mainStageX - (UNIT_X * 2) + incrementX, mainStageY + mainStageHeight + UNIT_Y - incrementY,
-         UNIT_X, UNIT_Y);
-  }
-  
-  // Draw UI components relative to the stage
-  drawPlayerLives(rightmostFenceX + (UNIT_X * 4), mainStageY);
-  drawScore(mainStageX + (UNIT_X * 12), topmostFenceY - UNIT_Y);
-  
-  // Draw player relative to the stage to keep them within the stage boundaries
-  drawPlayer(mainStageY, mainStageY + mainStageHeight);
-  drawEnemy(mainStageY, mainStageY + mainStageHeight);
 }
 
 void drawHealthBars() {
@@ -143,7 +99,9 @@ void drawHealthBars() {
   rect(healthBarSectionX + (UNIT_X * 10), healthBarSectionY + (UNIT_Y * 4), (PLAYER.hp / PLAYER.hpMax) * (width * 0.75), UNIT_Y * 2);
 }
 
-void drawPlayerLives(float playerLivesX, float playerLivesY) {
+void drawPlayerLives() {
+  float playerLivesX = width * 0.7;
+  float playerLivesY = height * 0.21;
   float playerLivesWidth = UNIT_X * 2;
   float playerLivesHeight = UNIT_Y * 2;
   
@@ -154,10 +112,15 @@ void drawPlayerLives(float playerLivesX, float playerLivesY) {
   }
 }
 
-void drawScore(float textX, float textY) {
+void drawScore() {
+  float textX = width * 0.66;
+  float textY = height * 0.16;
+
+  // Alignment is to prevent the score from trailing off the side of the screen
+  textAlign(RIGHT);
   textSize(UNIT_X * 2);
   fill(255);
-  text("KNOCKOUTS:" + abs(ENEMY.livesMax - ENEMY.lives), textX, textY);
+  text("KNOCKOUTS: " + abs(ENEMY.livesMax - ENEMY.lives), textX, textY);
 }
 
 void drawPlayer(float playerMinY, float playerMaxY) {
@@ -191,11 +154,7 @@ void drawPlayer(float playerMinY, float playerMaxY) {
                             playerMinY + PLAYER.hitBoundaryYUp + (UNIT_Y * 2),
                             playerMaxY - PLAYER.hitBoundaryYDown - (UNIT_Y * 2)); 
   PLAYER.processAction();
-  
-  // Resize the player sprite according to the screen dimensions
-  imageMode(CENTER);
-  tint(PLAYER.imgTint.get("R"), PLAYER.imgTint.get("G"), PLAYER.imgTint.get("B"));
-  image(PLAYER.imgDrawn, PLAYER.x, PLAYER.y, PLAYER.imgWidth, PLAYER.imgHeight);
+  PLAYER.drawImage();
 }
 
 void drawEnemy(float playerMinY, float playerMaxY) {
@@ -215,10 +174,7 @@ void drawEnemy(float playerMinY, float playerMaxY) {
                            playerMaxY - ENEMY.hitBoundaryYDown - (UNIT_Y * 2));
   ENEMY.decideAction();
   ENEMY.processAction();
-  
-  imageMode(CENTER);
-  tint(ENEMY.imgTint.get("R"), ENEMY.imgTint.get("G"), ENEMY.imgTint.get("B"));
-  image(ENEMY.imgDrawn, ENEMY.x, ENEMY.y, ENEMY.imgWidth, ENEMY.imgHeight);
+  ENEMY.drawImage();
 }
 
 void registerDamage() {
@@ -262,9 +218,9 @@ void updateStalling() {
 void checkGameOverTimer() {
   // Pause for a brief period after a game over, then reset the game
   if (PLAYER.isUsingGameOverImage() || ENEMY.isUsingGameOverImage()) {
-    GAME_OVER_TIMER += GAME_OVER_TIMER_INC;
-    if (GAME_OVER_TIMER >= GAME_OVER_TIMER_MAX) {
-      GAME_OVER_TIMER = 0;
+    GAME_OVER_TIMER.tick();
+    if (GAME_OVER_TIMER.isOvertime()) {
+      GAME_OVER_TIMER.reset();
       GAME_STARTED = false;
     }
   }
@@ -284,23 +240,32 @@ void mousePressed() {
     setupPlayers();
   } else if (PLAYER.isUsingGameOverImage() || ENEMY.isUsingGameOverImage()) {
     // User can quickly start a new game instead of waiting for the timer to finish 
-    GAME_STARTED = false;
+    GAME_OVER_TIMER.time = GAME_OVER_TIMER.timeMax;
   }
 }
 
 void keyPressed() {
   // Use this to debug by manually triggering an event, such as enemy health loss
-  // ENEMY.startHurt(95);
-}
-
-void keyReleased() {
-  // Can add charged attack execution here 
+  //PLAYER.startHurt(95);
 }
 
 void draw() {
   if (GAME_STARTED) {
-    drawStage();
+    BACKDROP.drawBackground();
+
+    // Draw UI components before the fighters to ensure that any possible overlap
+    // results in the fighters getting visual priority when drawing.
+    drawPlayerLives();
+    drawScore();
     drawHealthBars();
+
+    // Draw player and enemy
+    float fighterMinY = height * 0.21;
+    float fighterMaxY = height * 0.71;
+    drawPlayer(fighterMinY, fighterMaxY);
+    drawEnemy(fighterMinY, fighterMaxY);
+
+    // Process general state changes after everything has been drawn
     registerDamage();
     updateStalling();
     checkGameOverTimer();
