@@ -14,12 +14,8 @@ class MovingEnemy {
   float imgHeight;
   PImage imgDrawn;
   int imgMovingIndex = 0;
-  int imgMovingTimer = 0;
-  int imgMovingTimerInc = 5;
-  int imgMovingTimerMax = 15;
-  int recoveryFlashTimer = 0;
-  int recoveryFlashTimerInc = 5;
-  int recoveryFlashTimerMax = 10;
+  Timer imgMovingTimer = new Timer(1, 3, true);
+  Timer recoveryFlashTimer = new Timer(1, 2, true);
   int recoveryFlashCount = 0;
   int recoveryFlashCountMax = 10;
   float speedXMultiplier = 1;
@@ -52,9 +48,8 @@ class MovingEnemy {
     
     if (!isRecoveryFlashing) {
       // Toggles between the movement images over time
-      imgMovingTimer += imgMovingTimerInc;
-      if (imgMovingTimer >= imgMovingTimerMax) {
-        imgMovingTimer = 0;
+      imgMovingTimer.tick();
+      if (imgMovingTimer.isOvertime()) {
         imgMovingIndex++;
         // Loop back to the first image after a full cycle
         imgMovingIndex %= imgMoving.length;
@@ -94,12 +89,11 @@ class MovingEnemy {
   void processAction() {
     if (isRecoveryFlashing) {
       if (recoveryFlashCount < recoveryFlashCountMax) {
-        recoveryFlashTimer += recoveryFlashTimerInc;
+        recoveryFlashTimer.tick();
         
         // Transition between individual flashes
-        if (recoveryFlashTimer >= recoveryFlashTimerMax) {
+        if (recoveryFlashTimer.isOvertime()) {
           recoveryFlashCount++;
-          recoveryFlashTimer = 0;
           
           // Sprite flashing is done by switching between the idle and empty
           // images, leveraging much of the existing draw logic.
@@ -121,7 +115,7 @@ class MovingEnemy {
     
     isRecoveryFlashing = false;
     recoveryFlashCount = 0;
-    recoveryFlashTimer = 0;
+    recoveryFlashTimer.reset();
     hp = hpMax;
     x = positionOptionsX[randomX];
     y = positionOptionsY[randomY];

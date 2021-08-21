@@ -14,7 +14,6 @@ class MinigameBurninatePhonics extends MinigameManager {
                          "minigames/BurninatePhonics/TrogdorAttack.png"
                        },
                        localUnitX * 33, localUnitY * 33);
-  boolean trogdorFlipped = false;
   float[][] phonicPositions;
   char[] phonicLetters = new char[]{'a', 'e', 'i', 'o', 'u'};
   
@@ -71,31 +70,17 @@ class MinigameBurninatePhonics extends MinigameManager {
     rect(0, greyHeaderY + (skyStripeHeight * 2), width, skyStripeHeight);
     fill(219, 205, 115);
     rect(0, horizonY, width, height - horizonY);
-    
-    drawTrogdor();
+
+    Trogdor.drawImage();
     drawPhonics();
-  }
-  
-  void drawTrogdor() {
-    pushMatrix();
-    float tempX = Trogdor.x;
-    if (trogdorFlipped) {
-      // Flipping an image requires rescaling but also adjustment of the x, y
-      // variables based on said rescaling.
-      scale(-1, 1);
-      Trogdor.x *= -1;
-    }
-    image(Trogdor.imgDrawn, Trogdor.x, Trogdor.y, Trogdor.imgWidth, Trogdor.imgHeight);
+
     Trogdor.processAction();
-    
-    popMatrix();
-    Trogdor.x = tempX;
   }
-  
+
   void drawPhonics() {
     float phonicFontSize = localUnitX * 5;
     float phonicStepSize = localUnitX * timerSpeedMultiplier;
-    
+
     fill(224, 57, 51);
     textSize(phonicFontSize);
     for (int i =  0; i < phonicPositions.length; i++) {
@@ -107,24 +92,23 @@ class MinigameBurninatePhonics extends MinigameManager {
           phonicPositions[i][0] += phonicStepSize;
         }
       }
-      
-      
+
       float trogdorHitboxWidth = Trogdor.imgWidth * 0.15;
       float trogdorBurninateWidth = Trogdor.imgWidth * 0.5;
       boolean hasContactedFromRight = isPhonicApproachingFromRight &&
                                       phonicPositions[i][0] < Trogdor.x + trogdorHitboxWidth &&
-                                      (!Trogdor.isUsingAttackImage() || (Trogdor.isUsingAttackImage() && trogdorFlipped));
+                                      (!Trogdor.isUsingAttackImage() || (Trogdor.isUsingAttackImage() && Trogdor.isFlippedX));
       boolean hasContactedFromLeft = !isPhonicApproachingFromRight &&
                                      phonicPositions[i][0] > Trogdor.x - trogdorHitboxWidth &&
-                                     (!Trogdor.isUsingAttackImage() || (Trogdor.isUsingAttackImage() && !trogdorFlipped));
+                                     (!Trogdor.isUsingAttackImage() || (Trogdor.isUsingAttackImage() && !Trogdor.isFlippedX));
       boolean hasBurninatedFromRight = isPhonicApproachingFromRight &&
                                        phonicPositions[i][0] < Trogdor.x + trogdorBurninateWidth &&
                                        Trogdor.isUsingAttackImage() &&
-                                       !trogdorFlipped;
+                                       !Trogdor.isFlippedX;
       boolean hasBurninatedFromLeft = !isPhonicApproachingFromRight &&
                                       phonicPositions[i][0] > Trogdor.x - trogdorBurninateWidth &&
                                       Trogdor.isUsingAttackImage() &&
-                                      trogdorFlipped;
+                                      Trogdor.isFlippedX;
       // Phonic is within the hitbox of Trogdor
       if (hasContactedFromRight || hasContactedFromLeft) {
         Trogdor.startHurt(1);
@@ -135,20 +119,20 @@ class MinigameBurninatePhonics extends MinigameManager {
       } else if (hasBurninatedFromRight || hasBurninatedFromLeft) {
         randomisePhonicPositionX(i);
       }
-      
+
       text(phonicLetters[i], phonicPositions[i][0], phonicPositions[i][1]);
     }
   }
   
   void screenPressed() {
     if (!enableLoseTimer) {
-      Trogdor.attack1Timer = 0;
+      Trogdor.attack1Timer.reset();
       Trogdor.imgDrawn = Trogdor.imgIdle;
-      
+
       // Pressing on the screen refreshes the attack
       Trogdor.startAttack();
       // Note that Trogdor's default orientation is to the right
-      trogdorFlipped = mouseX <= (width * 0.5);
+      Trogdor.isFlippedX = mouseX <= (width * 0.5);
     }
   }
 }

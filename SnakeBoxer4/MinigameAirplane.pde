@@ -14,9 +14,12 @@ class MinigameAirplane extends MinigameManager {
     loadImage("minigames/Airplane/AirplaneIdle2.png")
   };
   int airplaneIdleIndex = 0;
+  Timer airplaneIdleTimer = new Timer(1, 8, true);
+  /*
   float airplaneIdleTimer = 0;
   float airplaneIdleTimerInc = 1;
   float airplaneIdleTimerMax = 8;
+  */
   float imgAirplaneWidth = localUnitX * 44;
   float imgAirplaneHeight = localUnitY * 44;
   
@@ -111,9 +114,8 @@ class MinigameAirplane extends MinigameManager {
     noTint();
     
     // Flip through the airplane sprites
-    airplaneIdleTimer += airplaneIdleTimerInc;
-    if (airplaneIdleTimer >= airplaneIdleTimerMax) {
-      airplaneIdleTimer = 0;
+    airplaneIdleTimer.tick();
+    if (airplaneIdleTimer.isOvertime()) {
       airplaneIdleIndex = (airplaneIdleIndex + 1) % imgAirplaneIdle.length;
     }
   }

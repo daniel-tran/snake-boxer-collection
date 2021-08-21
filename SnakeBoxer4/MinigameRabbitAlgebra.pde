@@ -48,7 +48,7 @@ class MinigameRabbitAlgebra extends MinigameManager {
     super(localUnitWidth, localUnitHeight);
     setText("", 255);
     // Instruction text is permanently displayed during play
-    instructionTimer = instructionTimerMax;
+    instructionTimer.time = instructionTimer.timeMax;
   }
   
   void drawMinigame() {

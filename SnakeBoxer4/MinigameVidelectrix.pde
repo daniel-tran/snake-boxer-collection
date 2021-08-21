@@ -23,9 +23,7 @@ class MinigameVidelectrix extends MinigameManager {
   };
   PImage runnerFallImageFinal = loadImage("minigames/Videlectrix/RunnerFall4.png");
   boolean isRunnerFalling = false;
-  float runnerFallTimer = 0;
-  float runnerFallTimerInc = 1;
-  float runnerFallTimerMax = 30;
+  Timer runnerFallTimer = new Timer(1, 30, false);
   PImage videlectrixLogo = loadImage("minigames/Videlectrix/VidelectrixLogo.png");
   
   MinigameVidelectrix(float localUnitWidth, float localUnitHeight) {
@@ -41,8 +39,8 @@ class MinigameVidelectrix extends MinigameManager {
     if (hasWon) {
       drawLogo();
       
-      runnerFallTimer += runnerFallTimerInc;
-      if (runnerFallTimer < runnerFallTimerMax) {
+      runnerFallTimer.tick();
+      if (!runnerFallTimer.isOvertime()) {
         // Runner is sliding across the floor after tripping
         runner.step(runnerSpeedFall);
         

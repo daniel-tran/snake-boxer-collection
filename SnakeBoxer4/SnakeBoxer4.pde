@@ -10,8 +10,6 @@ void setup() {
   
   UNIT_X = width * 0.01;
   UNIT_Y = UNIT_X;
-  FIGHTER_SPRITE_WIDTH = UNIT_X * 22;
-  FIGHTER_SPRITE_HEIGHT = UNIT_Y * 22;
 }
 
 void setupGame() {
@@ -25,19 +23,20 @@ void setupGame() {
   setupBackgroundElements();
   
   selectNextMinigame();
-  TRANSITION_TIMER = 0;
+  TRANSITION_TIMER.reset();
 }
 
 void setupPlayer() {
   float playerX = width * 0.75;
-  String[] attacksNormal = {"characters/BoxerJoe/BoxerJoe_Attack1.png",
-                            "characters/BoxerJoe/BoxerJoe_Attack2.png"};
   PLAYER = new Fighter(playerX, height * 0.6,
                        "characters/BoxerJoe/BoxerJoe_Idle.png",
                        "characters/BoxerJoe/BoxerJoe_Block.png",
                        "characters/BoxerJoe/BoxerJoe_Hurt.png",
-                       attacksNormal,
-                       FIGHTER_SPRITE_WIDTH, FIGHTER_SPRITE_HEIGHT);
+                       new String[]{
+                         "characters/BoxerJoe/BoxerJoe_Attack1.png",
+                         "characters/BoxerJoe/BoxerJoe_Attack2.png"
+                       },
+                       UNIT_X * 22, UNIT_Y * 22);
   PLAYER.lives = 4;
   PLAYER.hp = PLAYER.lives;
   PLAYER_PUSHBACK_X = new float[PLAYER.lives + 1];
@@ -63,10 +62,10 @@ void setupEnemies() {
     ENEMIES[i] = new MovingEnemy(0, 0,
                                  "characters/Snake/Snake_Hurt.png",
                                  idleImages,
-                                 FIGHTER_SPRITE_WIDTH, FIGHTER_SPRITE_HEIGHT,
+                                 PLAYER.imgWidth, PLAYER.imgHeight,
                                  possibleX, possibleY);
-    ENEMIES[i].imgMovingTimerMax *= 2;
-    ENEMIES[i].recoveryFlashTimerMax *= 2;
+    ENEMIES[i].imgMovingTimer.timeMax *= 2;
+    ENEMIES[i].recoveryFlashTimer.timeMax *= 2;
   }
   
   // Set the position of each individual snake
@@ -145,8 +144,6 @@ void setupBackgroundElements() {
 
 float UNIT_X;
 float UNIT_Y;
-float FIGHTER_SPRITE_WIDTH;
-float FIGHTER_SPRITE_HEIGHT;
 int SCORE;
 int LEVEL;
 Fighter PLAYER;
@@ -154,20 +151,14 @@ MovingEnemy[] ENEMIES;
 MovingBackgroundElement[] BACKGROUND_ELEMENTS;
 float[] PLAYER_PUSHBACK_X;
 boolean ENEMIES_WERE_HURT = false;
-int POINTS_TO_INCREASE_DIFICULTY = 5;
 float DIFFICULTY_SPEED_MULTIPLIER;
-float DIFFICULTY_SPEED_MULTIPLIER_INC = 0.25;
 PImage SNAKE_BOXER_LOGO;
 PImage SNAKE_BOXER_TITLE_SCREEN_SNAKE;
 boolean GAME_STARTED = false;
-int GAME_OVER_TIMER = 0;
-int GAME_OVER_TIMER_INC = 1;
-int GAME_OVER_TIMER_MAX = 120;
+Timer GAME_OVER_TIMER = new Timer(1, 120, false);
 
 MinigameManager MM;
-float TRANSITION_TIMER;
-float TRANSITION_TIMER_INC = 1;
-float TRANSITION_TIMER_MAX = 30;
+Timer TRANSITION_TIMER = new Timer(1, 30, false);
 
 void drawPlayerLives(float playerLivesX, float playerLivesY) {
   float playerLivesWidth = UNIT_X * 2;
@@ -217,15 +208,18 @@ void drawEnemies() {
   } else if (ENEMIES_WERE_HURT) {
     ENEMIES_WERE_HURT = false;
     increaseScore();
-    TRANSITION_TIMER = 0;
+    TRANSITION_TIMER.reset();
   }
 }
 
 void increaseScore() {
+  int pointsToIncreaseDifficulty = 5;
+  float difficultySpeedMultiplierInc = 0.25;
+  
   SCORE++;
   // Increase difficulty after a certain score milestone, rather than after each minigame
-  if (SCORE % POINTS_TO_INCREASE_DIFICULTY == 0) {
-    DIFFICULTY_SPEED_MULTIPLIER += DIFFICULTY_SPEED_MULTIPLIER_INC;
+  if (SCORE % pointsToIncreaseDifficulty == 0) {
+    DIFFICULTY_SPEED_MULTIPLIER += difficultySpeedMultiplierInc;
   }
 }
 
@@ -236,13 +230,16 @@ void drawPlayer() {
   if (PLAYER.x > PLAYER_PUSHBACK_X[pushbackIndex]) {
     PLAYER.x -= UNIT_X;
   }
-  if (PLAYER.hurtTimer == PLAYER.hurtTimerMax) {
-    TRANSITION_TIMER = 0;
-  }
-  
+
   imageMode(CENTER);
   image(PLAYER.imgDrawn, PLAYER.x, PLAYER.y, PLAYER.imgWidth, PLAYER.imgHeight);
+  boolean isPlayerHurt = PLAYER.hurtTimer.isActive();
   PLAYER.processAction();
+
+  // Player has recovered from being hurt
+  if (isPlayerHurt && PLAYER.hurtTimer.isActive()) {
+    TRANSITION_TIMER.reset();
+  }
 }
 
 void selectNextMinigame() {
@@ -297,9 +294,9 @@ void selectNextMinigame() {
 }
 
 void drawGame() {
-  if (TRANSITION_TIMER < TRANSITION_TIMER_MAX) {
+  if (!TRANSITION_TIMER.isOvertime()) {
     if (PLAYER.isPlayable()) {
-      TRANSITION_TIMER += TRANSITION_TIMER_INC;
+      TRANSITION_TIMER.tick();
     }
     // Background elements are drawn first so that everything overlaps them
     drawBackgroundElements();
@@ -324,7 +321,7 @@ void drawGame() {
       // Set the transition timer low enough that there's enough time for the
       // player or snake hurt animations to finish playing.
       // This will be set again (properly) once those animations finish.
-      TRANSITION_TIMER = -TRANSITION_TIMER_MAX;
+      TRANSITION_TIMER.time = -TRANSITION_TIMER.timeMax;
       if (MM.hasWon) {
         for (int i = 0; i < ENEMIES.length; i++) {
           ENEMIES[i].startHurt();
@@ -392,9 +389,9 @@ void drawTitleScreen() {
 void checkGameOverTimer() {
   // Pause for a brief period after a game over, then reset the game
   if (!PLAYER.isPlayable()) {
-    GAME_OVER_TIMER += GAME_OVER_TIMER_INC;
-    if (GAME_OVER_TIMER >= GAME_OVER_TIMER_MAX) {
-      GAME_OVER_TIMER = 0;
+    GAME_OVER_TIMER.tick();
+    if (GAME_OVER_TIMER.isOvertime()) {
+      GAME_OVER_TIMER.reset();
       GAME_STARTED = false;
       setupGame();
     }

@@ -8,17 +8,11 @@ class MinigameManager {
   float instructionX = width * 0.5;
   float instructionY = height * 0.5;
   int instructionColour = 255; // For simplicity, this is a black/white colour
-  float instructionTimer = 0;
-  float instructionTimerInc = 1;
-  float instructionTimerMax = 60;
+  Timer instructionTimer = new Timer(1, 60, false);
   boolean enableLoseTimer = false;
-  float loseTimer = 0;
-  float loseTimerInc = instructionTimerInc;
-  float loseTimerMax = instructionTimerMax;
+  Timer loseTimer = new Timer(1, 60, false);
   boolean enableWinTimer = false;
-  float winTimer = 0;
-  float winTimerInc = instructionTimerInc;
-  float winTimerMax = instructionTimerMax;
+  Timer winTimer = new Timer(1, 60, false);
   float timerEndX = width * 0.1;
   float timerSpeedStepX = width * 0.005;
   float timerSpeedMultiplier = 1;
@@ -48,8 +42,8 @@ class MinigameManager {
     
     timerEnemy.imgWidth = localUnitX * 11;
     timerEnemy.imgHeight = localUnitY * 11;
-    timerFighter.imgWidth = localUnitX * 11;
-    timerFighter.imgHeight = localUnitY * 11;
+    timerFighter.imgWidth = timerEnemy.imgWidth;
+    timerFighter.imgHeight = timerEnemy.imgHeight;
   }
   
   void setTimerSpeed(float multiplier) {
@@ -62,13 +56,13 @@ class MinigameManager {
   }
   
   boolean isShowingInstructions() {
-    return instructionTimer < instructionTimerMax;
+    return !instructionTimer.isOvertime();
   }
   
   void processAction() {
     if (isShowingInstructions()) {
       // Game pauses briefly upfront to give players time to read the task
-      instructionTimer += instructionTimerInc;
+      instructionTimer.tick();
     } else {
       // The timer is represented as a snake moving towards Boxer Joe,
       // collecting the coloured pellets on the way.
@@ -93,16 +87,16 @@ class MinigameManager {
       }
       
       if (enableLoseTimer) {
-        loseTimer += loseTimerInc;
-        if (loseTimer >= loseTimerMax) {
+        loseTimer.tick();
+        if (loseTimer.isOvertime()) {
           // Player's loss is inevitable, so prevent the win conditions from overriding this
           hasWon = false;
           enableWinBySurvival = false;
           endMinigame();
         }
       } else if (enableWinTimer) {
-        winTimer += winTimerInc;
-        if (winTimer >= winTimerMax) {
+        winTimer.tick();
+        if (winTimer.isOvertime()) {
           hasWon = true;
           endMinigame();
         }
