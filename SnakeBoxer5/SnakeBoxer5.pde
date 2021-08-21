@@ -12,8 +12,8 @@ void setup() {
   ZONE_MOVE_UP = height * 0.5;
   ZONE_MOVE_DOWN = height * 0.5;
 
-  SNAKE_BOXER_LOGO = loadImage("titlescreen/SnakeBoxer_Logo.png");
-  SNAKE_BOXER_SNAKE = loadImage("titlescreen/SnakeBoxer_Snake.png");
+  SNAKE_BOXER_LOGO = loadImage("titlescreen/SnakeBoxer5_Logo.png");
+  SNAKE_BOXER_SNAKE = loadImage("titlescreen/SnakeBoxer5_Snake.png");
   
   // The boxing stadium background is a special background,
   // and does not make use of some initial parameters.
