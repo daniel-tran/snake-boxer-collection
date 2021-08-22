@@ -9,7 +9,6 @@ class MovingEnemy {
   PImage[] imgMoving;
   boolean isRecoveryFlashing = false;
   PImage imgRecoveryFlash = loadImage("Empty.png");
-  PImage imgGameOver = loadImage("GameOver.png");
   float imgWidth;
   float imgHeight;
   PImage imgDrawn;
