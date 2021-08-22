@@ -196,7 +196,6 @@ class Background {
   }
   
   void drawBackgroundRegular() {
-    drawBoxingStadiuim();
     rectMode(CORNERS);
     // Draw the main background
     background(mainColour.get("R"), mainColour.get("G"), mainColour.get("B"));
