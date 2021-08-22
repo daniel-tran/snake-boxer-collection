@@ -17,8 +17,8 @@ class MinigameScoreCard extends MinigameManager {
 
   int pointCount = 5;
   int pointsScored = 0;
-  float[][] pointCoordinates = new float[pointCount][2];
   boolean[] pointPunchedStates = new boolean[pointCount];
+  ClickableButton[] pointAreas = new ClickableButton[pointCount];
   
   MinigameScoreCard(float localUnitWidth, float localUnitHeight) {
     super(localUnitWidth, localUnitHeight);
@@ -38,9 +38,12 @@ class MinigameScoreCard extends MinigameManager {
       } else {
         pointPunchedStates[i] = false;
       }
-      
-      pointCoordinates[i][0] = pointInitialX + (pointIncX * i);
-      pointCoordinates[i][1] = pointInitialY + (pointIncY * i);
+
+      // Set up each point as a button, but only use it for press detection.
+      // This is to avoid having multiple copies of the same image in memory, as the minigame
+      // is slow enough in Java mode.
+      pointAreas[i] = new ClickableButton(pointInitialX + (pointIncX * i), pointInitialY + (pointIncY * i),
+                                          localUnitX * 8, localUnitY * 8);
     }
   }
   
@@ -68,9 +71,6 @@ class MinigameScoreCard extends MinigameManager {
   }
   
   void drawPoints() {
-    float pointWidth = localUnitX * 8;
-    float pointHeight = localUnitY * 8;
-
     for (int i = 0; i < pointPunchedStates.length; i++) {
       PImage imgPointDrawn;
       if (pointPunchedStates[i]) {
@@ -79,8 +79,8 @@ class MinigameScoreCard extends MinigameManager {
         imgPointDrawn = imgPointInactive;
       }
       
-      // Draw the point
-      image(imgPointDrawn, pointCoordinates[i][0], pointCoordinates[i][1], pointWidth, pointHeight);
+      // Draw the point using positioning information from the point area
+      image(imgPointDrawn, pointAreas[i].x, pointAreas[i].y, pointAreas[i].buttonWidth, pointAreas[i].buttonHeight);
     }
   }
   
@@ -90,13 +90,8 @@ class MinigameScoreCard extends MinigameManager {
   }
   
   void screenPressed() {
-    float pointPressWidth = imgPointInactive.width * 0.5;
-    float pointPressHeight = imgPointInactive.height * 0.25;
-
     for (int i = 0; i < pointPunchedStates.length; i++) {
-      boolean pointWasPressed = hasPressedArea(pointCoordinates[i][0], pointCoordinates[i][1],
-                                               pointPressWidth, pointPressHeight);
-      if (pointWasPressed && !pointPunchedStates[i]) {
+      if (pointAreas[i].isPressed(mouseX, mouseY) && !pointPunchedStates[i]) {
         punchPoint(i);
         // Since only one point can be punched at a time, no point in continuing the loop
         break;
