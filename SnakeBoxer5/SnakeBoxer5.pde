@@ -12,24 +12,26 @@ void setup() {
   ZONE_MOVE_UP = height * 0.5;
   ZONE_MOVE_DOWN = height * 0.5;
 
-  SNAKE_BOXER_LOGO = loadImage("titlescreen/SnakeBoxer5_Logo.png");
-  SNAKE_BOXER_SNAKE = loadImage("titlescreen/SnakeBoxer5_Snake.png");
-  
+  TITLE_SCREEN = new TitleScreen("titlescreen/SnakeBoxer5_Logo.png",
+                                 "USE THE SCREEN!\n\nTOUCH UP/DOWN= MOVE\nTOUCH RIGHT= BLOCK\nTOUCH LEFT= PUNCH\n\nTOUCH= START",
+                                 width * 0.22, height * 0.6,
+                                 UNIT_X, UNIT_Y);
+  TITLE_SCREEN.setGeneralItemImage("titlescreen/SnakeBoxer5_Snake.png",
+                                   width * 0.7, height * 0.75 + UNIT_Y,
+                                   UNIT_X * 18, UNIT_Y * 27);
+
   // The boxing stadium background is a special background,
   // and does not make use of some initial parameters.
   BACKDROP = new Background(6, 0, 0);
 }
 
-PImage SNAKE_BOXER_LOGO;
-PImage SNAKE_BOXER_SNAKE;
-boolean GAME_STARTED = false;
+TitleScreen TITLE_SCREEN;
 float UNIT_X;
 float UNIT_Y;
 float ZONE_ATTACK;
 float ZONE_BLOCK;
 float ZONE_MOVE_UP;
 float ZONE_MOVE_DOWN;
-Timer GAME_OVER_TIMER = new Timer(1, 120, false);
 
 Fighter PLAYER;
 AIFighter ENEMY;
@@ -58,20 +60,6 @@ void setupPlayers() {
                        PLAYER.imgWidth, PLAYER.imgHeight);
   ENEMY.setLives(Integer.MAX_VALUE);
   ENEMY.randomiseTintOnLifeRecovery = true;
-}
-
-void drawTitleScreen() {
-  background(49, 52, 74);
-  noTint();
-  imageMode(CENTER);
-  image(SNAKE_BOXER_LOGO, width * 0.5, height * 0.25, UNIT_X * 60, UNIT_Y * 30);
-  image(SNAKE_BOXER_SNAKE, width * 0.7, height * 0.75 + UNIT_Y, UNIT_X * 18, UNIT_Y * 27);
-  
-  textAlign(LEFT);
-  textSize(UNIT_X * 2);
-  fill(255);
-  text("USE THE SCREEN!\n\nTOUCH UP/DOWN= MOVE\nTOUCH RIGHT= BLOCK\nTOUCH LEFT= PUNCH\n\nTOUCH= START",
-       width * 0.22, height * 0.6);
 }
 
 void drawHealthBars() {
@@ -218,11 +206,7 @@ void updateStalling() {
 void checkGameOverTimer() {
   // Pause for a brief period after a game over, then reset the game
   if (PLAYER.isUsingGameOverImage() || ENEMY.isUsingGameOverImage()) {
-    GAME_OVER_TIMER.tick();
-    if (GAME_OVER_TIMER.isOvertime()) {
-      GAME_OVER_TIMER.reset();
-      GAME_STARTED = false;
-    }
+    TITLE_SCREEN.resetByTimer();
   }
 }
 
@@ -231,16 +215,16 @@ void mousePressed() {
   // This logic is not called during draw() to prevent continuous attacking
   // by holding down a single key.
   // Also check the sprite to avoid quick recovery after getting hurt.
-  if (GAME_STARTED && mouseX < ZONE_ATTACK && PLAYER.isPlayable() && !PLAYER.isUsingHurtImage()) {
+  if (TITLE_SCREEN.isStarted() && mouseX < ZONE_ATTACK && PLAYER.isPlayable() && !PLAYER.isUsingHurtImage()) {
     PLAYER.startAttack();
   }
   
-  if (!GAME_STARTED) {
-    GAME_STARTED = true;
+  if (!TITLE_SCREEN.isStarted()) {
+    TITLE_SCREEN.setStartState(true);
     setupPlayers();
   } else if (PLAYER.isUsingGameOverImage() || ENEMY.isUsingGameOverImage()) {
     // User can quickly start a new game instead of waiting for the timer to finish 
-    GAME_OVER_TIMER.time = GAME_OVER_TIMER.timeMax;
+    TITLE_SCREEN.forceReset();
   }
 }
 
@@ -250,7 +234,7 @@ void keyPressed() {
 }
 
 void draw() {
-  if (GAME_STARTED) {
+  if (TITLE_SCREEN.isStarted()) {
     BACKDROP.drawBackground();
 
     // Draw UI components before the fighters to ensure that any possible overlap
@@ -270,6 +254,6 @@ void draw() {
     updateStalling();
     checkGameOverTimer();
   } else {
-    drawTitleScreen();
+    TITLE_SCREEN.drawTitleScreen();
   }
 }

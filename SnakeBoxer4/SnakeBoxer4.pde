@@ -4,12 +4,17 @@ void setup() {
   noStroke();
   orientation(LANDSCAPE);
   textFont(createFont("PressStart2P.ttf", 32));
-  
-  SNAKE_BOXER_LOGO = loadImage("titlescreen/SnakeBoxer4_Logo.png");
-  SNAKE_BOXER_TITLE_SCREEN_SNAKE = loadImage("titlescreen/SnakeBoxer4_Snake.png");
-  
+
   UNIT_X = width * 0.01;
   UNIT_Y = UNIT_X;
+  TITLE_SCREEN = new TitleScreen("titlescreen/SnakeBoxer4_Logo.png",
+                                 "KEYBOARD/\nTOUCH SCREEN/\nDRAG= PLAY",
+                                 width * 0.22, height * 0.7,
+                                 UNIT_X, UNIT_Y);
+  TITLE_SCREEN.setTagline("LADY SNAKE PARADE", width * 0.225, height * 0.55);
+  TITLE_SCREEN.setGeneralItemImage("titlescreen/SnakeBoxer4_Snake.png",
+                                   width * 0.65, height * 0.75,
+                                   UNIT_X * 33, UNIT_Y * 33);
 }
 
 void setupGame() {
@@ -152,10 +157,7 @@ MovingBackgroundElement[] BACKGROUND_ELEMENTS;
 float[] PLAYER_PUSHBACK_X;
 boolean ENEMIES_WERE_HURT = false;
 float DIFFICULTY_SPEED_MULTIPLIER;
-PImage SNAKE_BOXER_LOGO;
-PImage SNAKE_BOXER_TITLE_SCREEN_SNAKE;
-boolean GAME_STARTED = false;
-Timer GAME_OVER_TIMER = new Timer(1, 120, false);
+TitleScreen TITLE_SCREEN;
 
 MinigameManager MM;
 Timer TRANSITION_TIMER = new Timer(1, 30, false);
@@ -337,70 +339,53 @@ void drawGame() {
 
 void mousePressed() {
   // Prevent players from making actions until the minigame has actually started
-  if (GAME_STARTED) {
+  if (TITLE_SCREEN.isStarted()) {
     if (!MM.isShowingInstructions()) {
       MM.screenPressed();
     }
   } else {
-    GAME_STARTED = true;
+    TITLE_SCREEN.setStartState(true);
     setupGame();
   }
 }
 
 void mouseReleased() {
   // Prevent players from making actions until the minigame has actually started
-  if (GAME_STARTED && !MM.isShowingInstructions()) {
+  if (TITLE_SCREEN.isStarted() && !MM.isShowingInstructions()) {
     MM.screenReleased();
   }
 }
 
 void mouseDragged() {
   // Prevent players from making actions until the minigame has actually started
-  if (GAME_STARTED && !MM.isShowingInstructions()) {
+  if (TITLE_SCREEN.isStarted() && !MM.isShowingInstructions()) {
     MM.screenDragged();
   }
 }
 
 void keyPressed() {
   // Prevent players from making actions until the minigame has actually started
-  if (GAME_STARTED && !MM.isShowingInstructions()) {
+  if (TITLE_SCREEN.isStarted() && !MM.isShowingInstructions()) {
     MM.keyboardPressed();
   }
-}
-
-void drawTitleScreen() {
-  background(49, 52, 74);
-  noTint();
-  imageMode(CENTER);
-  image(SNAKE_BOXER_LOGO, width * 0.5, height * 0.3, UNIT_X * 60, UNIT_Y * 30);
-  image(SNAKE_BOXER_TITLE_SCREEN_SNAKE, width * 0.65, height * 0.75, UNIT_X * 33, UNIT_Y * 33);
-  textSize(UNIT_X * 2.5);
-  textAlign(LEFT);
-  fill(255, 0, 0);
-  text("LADY SNAKE PARADE",
-       width * 0.225, height * 0.55);
-  
-  textSize(UNIT_X * 2);
-  fill(255);
-  text("KEYBOARD/\nTOUCH SCREEN/\nDRAG= PLAY",
-       width * 0.22, height * 0.7);
 }
 
 void checkGameOverTimer() {
   // Pause for a brief period after a game over, then reset the game
   if (!PLAYER.isPlayable()) {
-    GAME_OVER_TIMER.tick();
-    if (GAME_OVER_TIMER.isOvertime()) {
-      GAME_OVER_TIMER.reset();
-      GAME_STARTED = false;
+    boolean startStatus = TITLE_SCREEN.isStarted();
+    TITLE_SCREEN.resetByTimer();
+
+    // Game reset timer has finished
+    if (startStatus && !TITLE_SCREEN.isStarted()) {
       setupGame();
     }
   }
 }
 
 void draw() {
-  if (!GAME_STARTED) {
-    drawTitleScreen();
+  if (!TITLE_SCREEN.isStarted()) {
+    TITLE_SCREEN.drawTitleScreen();
   } else {
     drawGame();
     checkGameOverTimer();

@@ -8,8 +8,14 @@ void setup() {
   UNIT_X = width * 0.01;
   UNIT_Y = UNIT_X;
   
-  SNAKE_BOXER_LOGO = loadImage("titlescreen/SnakeBoxer3_Logo.png");
-  SNAKE_BOXER_IMAGE = loadImage("titlescreen/SnakeBoxer3_Image.png");
+  TITLE_SCREEN = new TitleScreen("titlescreen/SnakeBoxer3_Logo.png",
+                                 "USE THE SCREEN!\n\nTOUCH= PUNCH\nUPGRADE= POWER UP USING DIPLOMACY\nRANK UP= DOUBLES UPGRADES\nEVENT= FREE DIPLOMACY SOMETIMES",
+                                 width * 0.22, height * 0.7,
+                                 UNIT_X, UNIT_Y);
+  TITLE_SCREEN.setTagline("SOLVING PROBLEMS\nTHROUGH DIPLOMACY", width * 0.225, height * 0.55);
+  TITLE_SCREEN.setGeneralItemImage("titlescreen/SnakeBoxer3_Image.png",
+                                   width * 0.8, height * 0.65,
+                                   UNIT_X * 22, UNIT_Y * 22);
   PLAYER = new Fighter(width * 0.55, height * 0.65,
                        "characters/BoxerJoe/BoxerJoe_Idle.png",
                        "characters/BoxerJoe/BoxerJoe_Block.png",
@@ -70,24 +76,6 @@ void setup() {
 
 void setUpgradeMenuHeading() {
   UPGRADE_MENU.setText(RANK_UP_MENU.getCurrentRank() + " Upgrades", "");
-}
-
-void drawTitleScreen() {
-  background(49, 52, 74);
-  noTint();
-  imageMode(CENTER);
-  image(SNAKE_BOXER_LOGO, width * 0.5, height * 0.3, UNIT_X * 60, UNIT_Y * 30);
-  image(SNAKE_BOXER_IMAGE, width * 0.8, height * 0.65, UNIT_X * 22, UNIT_Y * 22);
-  
-  textSize(UNIT_X * 2.5);
-  textAlign(LEFT);
-  fill(255, 0, 0);
-  text("SOLVING PROBLEMS\nTHROUGH DIPLOMACY", width * 0.225, height * 0.55);
-  
-  textSize(UNIT_X * 2);
-  fill(255);
-  text("USE THE SCREEN!\n\nTOUCH= PUNCH\nUPGRADE= POWER UP USING DIPLOMACY\nRANK UP= DOUBLES UPGRADES\nEVENT= FREE DIPLOMACY SOMETIMES",
-       width * 0.22, height * 0.7);
 }
 
 void drawBackground() {
@@ -167,14 +155,12 @@ ClickableButton RANK_UP_BUTTON;
 DialogBoxRankUp RANK_UP_MENU;
 ClickableButton EVENT_BUTTON;
 DialogBoxEvent EVENT_MENU;
-boolean GAME_STARTED = false;
-PImage SNAKE_BOXER_LOGO;
-PImage SNAKE_BOXER_IMAGE;
+TitleScreen TITLE_SCREEN;
 
 void mousePressed() {
   // The initial press to get past the title screen should not count as scoring
-  if (!GAME_STARTED) {
-    GAME_STARTED = true;
+  if (!TITLE_SCREEN.isStarted()) {
+    TITLE_SCREEN.setStartState(true);
     return;
   }
   
@@ -237,8 +223,8 @@ void keyPressed() {
 }
 
 void draw() {
-  if (!GAME_STARTED) {
-    drawTitleScreen();
+  if (!TITLE_SCREEN.isStarted()) {
+    TITLE_SCREEN.drawTitleScreen();
   } else {
     drawBackground();
     

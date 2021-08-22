@@ -19,8 +19,13 @@ void setup() {
   PLAYER_BOUNDARY_MIN_Y = height * 0.15;
   PLAYER_BOUNDARY_MAX_Y = height * 0.7;
   ENEMY_RESET_X = -UNIT_X;
-  SNAKE_BOXER_LOGO = loadImage("titlescreen/SnakeBoxer2_Logo.png");
-  SNAKE_BOXER_SNAKE = loadImage("titlescreen/SnakeBoxer_Snake.png");
+  // Instructions will be drawn separately, as they contain images
+  TITLE_SCREEN = new TitleScreen("titlescreen/SnakeBoxer2_Logo.png",
+                                 "", 0, 0,
+                                 UNIT_X, UNIT_Y);
+  TITLE_SCREEN.setTagline("THE BITING OF\n  BOXER JOE", width * 0.225, height * 0.5);
+  TITLE_SCREEN.setGeneralItemImage("titlescreen/SnakeBoxer_Snake.png", width * 0.75, height * 0.7,
+                                   UNIT_X * 30, UNIT_Y * 30);
   setupGame();
 }
 
@@ -162,17 +167,17 @@ void touchStarted() {
 }
 
 void registerPlayerAttack() {
-  if (GAME_STARTED) {
+  if (TITLE_SCREEN.isStarted()) {
     if (PLAYER.isPlayable() && !PLAYER.isUsingAttackImage() && !PLAYER.isUsingHurtImage()) {
       PLAYER.startAttack();
     }
     
     if (!PLAYER.isPlayable()) {
       // User can quickly start a new game instead of waiting for the timer to finish  
-      GAME_OVER_TIMER.time = GAME_OVER_TIMER.timeMax;
+      TITLE_SCREEN.forceReset();
     }
   } else {
-    GAME_STARTED = true;
+    TITLE_SCREEN.setStartState(true);
     setupGame();
   }
 }
@@ -188,10 +193,7 @@ float ENEMY_RESET_X;
 int SCORE;
 int LEVEL;
 int MAX_LEVEL_SCORE;
-Timer GAME_OVER_TIMER = new Timer(1, 120, false);
-boolean GAME_STARTED = false;
-PImage SNAKE_BOXER_LOGO;
-PImage SNAKE_BOXER_SNAKE;
+TitleScreen TITLE_SCREEN;
 String[] FILENAMES_POSITIVE = {"items/Strawberry.png",
                                "items/Beer.png",
                                "items/RoastPig.png",
@@ -204,16 +206,9 @@ Background BACKDROP;
 boolean JOYSTICK_ACTIVE;
 
 void drawTitleScreen() {
-  background(49, 52, 74);
-  noTint();
-  imageMode(CENTER);
-  image(SNAKE_BOXER_LOGO, width * 0.5, height * 0.25, UNIT_X * 60, UNIT_Y * 30);
-  image(SNAKE_BOXER_SNAKE, width * 0.75, height * 0.7, UNIT_X * 30, UNIT_Y * 30);
-  textSize(UNIT_X * 2.5);
-  fill(255, 0, 0);
-  text("THE BITING OF\n  BOXER JOE",
-       width * 0.225, height * 0.5);
-  
+  TITLE_SCREEN.drawTitleScreen();
+
+  // Draw instructions, with images drawn in relation to some words
   textSize(UNIT_X * 2);
   fill(255);
   text("KEYBOARD/\nTOUCH SCREEN= PUNCH\n\nJOYSTICK= MOVE\n\nGET:\n\nAVOID:",
@@ -438,17 +433,12 @@ void registerScore(int points) {
 void checkGameOverTimer() {
   // Pause for a brief period after a game over, then reset the game
   if (!PLAYER.isPlayable()) {
-    GAME_OVER_TIMER.tick();
-    if (GAME_OVER_TIMER.isOvertime()) {
-      GAME_OVER_TIMER.reset();
-      GAME_STARTED = false;
-      setupGame();
-    }
+    TITLE_SCREEN.resetByTimer();
   }
 }
 
 void draw() {
-  if (!GAME_STARTED) {
+  if (!TITLE_SCREEN.isStarted()) {
     drawTitleScreen();
   } else {
     BACKDROP.drawBackground();

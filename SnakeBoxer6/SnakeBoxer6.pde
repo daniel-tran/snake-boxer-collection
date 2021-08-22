@@ -11,10 +11,16 @@ void setup() {
   ZONE_BLOCK = width * 0.8;
   ZONE_MOVE_UP = height * 0.5;
   ZONE_MOVE_DOWN = height * 0.5;
-  
-  SNAKE_BOXER_LOGO = loadImage("titlescreen/SnakeBoxer_Logo.png");
-  SNAKE_BOXER_BOX_ART = loadImage("titlescreen/SnakeBoxer_BoxArt.png");
-  
+
+  TITLE_SCREEN = new TitleScreen("titlescreen/SnakeBoxer_Logo.png",
+                                 "USE THE SCREEN!\n\nTOUCH UP/DOWN= MOVE\nTOUCH RIGHT= BLOCK\n" +
+                                 "HOLD RIGHT= CHARGE\nTOUCH LEFT= PUNCH\n\nTOUCH= START",
+                                 width * 0.22, height * 0.6,
+                                 UNIT_X, UNIT_Y);
+  TITLE_SCREEN.setTagline("NOW THE SNAKES HAVE FISTS TOO", width * 0.225, height * 0.5);
+  TITLE_SCREEN.setGeneralItemImage("titlescreen/SnakeBoxer_BoxArt.png",
+                                   width * 0.75, height * 0.75, UNIT_X * 27, UNIT_Y * 27);
+
   setupGame();
   setupWorldDefault();
   
@@ -28,7 +34,7 @@ void setupFighterSelection() {
 }
 
 void resetFighterSelection() {
-  HAS_PRESSED_TITLE_SCREEN = false;
+  TITLE_SCREEN.forceReset();
   GAME_STARTED = false;
   WORLD.hasFightStarted = false;
   HAS_STARTED_1P_GAME = false;
@@ -84,7 +90,6 @@ void setupGame() {
   BACK_TO_FIGHTER_SELECTION_TIMER = new Timer(1, 60, false);
 }
 
-boolean GAME_STARTED = false;
 float UNIT_X;
 float UNIT_Y;
 float ZONE_ATTACK;
@@ -102,28 +107,10 @@ WorldMap WORLD;
 
 FighterSelection FIGHTER_SELECTION;
 boolean HAS_STARTED_1P_GAME;
-
-PImage SNAKE_BOXER_LOGO;
-PImage SNAKE_BOXER_BOX_ART;
-boolean HAS_PRESSED_TITLE_SCREEN;
-
-void drawTitleScreen() {
-  background(49, 52, 74);
-  noTint();
-  imageMode(CENTER);
-  image(SNAKE_BOXER_LOGO, width * 0.5, height * 0.25, UNIT_X * 60, UNIT_Y * 30);
-  image(SNAKE_BOXER_BOX_ART, width * 0.75, height * 0.75, UNIT_X * 27, UNIT_Y * 27);
-  
-  textSize(UNIT_X * 2);
-  textAlign(LEFT);
-  fill(255, 0, 0);
-  text("NOW THE SNAKES HAVE FISTS TOO", width * 0.225, height * 0.5);
-  
-  fill(255);
-  text("USE THE SCREEN!\n\nTOUCH UP/DOWN= MOVE\nTOUCH RIGHT= BLOCK\n" +
-       "HOLD RIGHT= CHARGE\nTOUCH LEFT= PUNCH\n\nTOUCH= START",
-       width * 0.22, height * 0.6);
-}
+// Title screen start state is to track the transition from title screen to fighter selection.
+// Another variable is needed to track whether the user has transitioned to the fight.
+TitleScreen TITLE_SCREEN;
+boolean GAME_STARTED = false;
 
 void drawHealthBars() {
   float healthBarSectionX = UNIT_X * 2;
@@ -346,10 +333,10 @@ void returnToFighterSelection() {
 
 void mousePressed() {
   if (WORLD.locationIndex < 0) {
-    if (!HAS_PRESSED_TITLE_SCREEN) {
+    if (!TITLE_SCREEN.isStarted()) {
       // Title screen
       // Press any part of the screen to move beyond the title screen.
-      HAS_PRESSED_TITLE_SCREEN = true;
+      TITLE_SCREEN.setStartState(true);
     } else if (HAS_STARTED_1P_GAME) {
       // Location selection screen
       if (WORLD.locationIndex < 0) {
@@ -358,7 +345,7 @@ void mousePressed() {
         if (WORLD.locationIndex >= 0) {
           GAME_STARTED = true;
           BACKDROP = WORLD.locationBackground[WORLD.locationIndex];
-          ENEMY = WORLD.getLocationFighter(WORLD.locationIndex);//WORLD.locationFighters[WORLD.locationIndex];
+          ENEMY = WORLD.getLocationFighter(WORLD.locationIndex);
           WORLD.hasFightStarted = false;
           
           PLAYER.y = ENEMY.y;
@@ -405,7 +392,7 @@ void mousePressed() {
 void keyPressed() {
   // Use this to debug by manually triggering an event, such as enemy health loss
   //PLAYER.startHurt(95);
-  ENEMY.startHurt(95);
+  //ENEMY.startHurt(95);
   // Toggle between 1P and 2P mode
   //FIGHTER_SELECTION.playersCount = (FIGHTER_SELECTION.playersCount % 2) + 1;
   //FIGHTER_SELECTION.playerSelectionIndex = 0;
@@ -413,8 +400,8 @@ void keyPressed() {
 
 void draw() {
   if (WORLD.locationIndex < 0) {
-    if (!HAS_PRESSED_TITLE_SCREEN) {
-      drawTitleScreen();
+    if (!TITLE_SCREEN.isStarted()) {
+      TITLE_SCREEN.drawTitleScreen();
     } else if (HAS_STARTED_1P_GAME) {
       WORLD.drawMap();
     } else {

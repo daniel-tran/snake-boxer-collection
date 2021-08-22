@@ -7,7 +7,10 @@ void setup() {
   
   UNIT_X = width * 0.01;
   UNIT_Y = UNIT_X;
-  SNAKE_BOXER_LOGO = loadImage("titlescreen/SnakeBoxer1_Logo.png");
+  TITLE_SCREEN = new TitleScreen("titlescreen/SnakeBoxer1_Logo.png",
+                                 "PROTECT THE DELI SHOP!\n\nPRESS THE SCREEN TO MOVE AROUND!\nALSO PRESS TO PUNCH!",
+                                 width * 0.22, height * 0.6,
+                                 UNIT_X, UNIT_Y);
 }
 
 void setupGame() {
@@ -74,9 +77,7 @@ int LEVEL;
 int KNOCKOUTS;
 int[] LEVEL_BOUNDARIES = {12, 24, 48};
 int MAX_LEVEL_KNOCKOUTS;
-PImage SNAKE_BOXER_LOGO;
-boolean GAME_STARTED = false;
-Timer GAME_OVER_TIMER = new Timer(1, 120, false);
+TitleScreen TITLE_SCREEN;
 
 void drawHealthBar() {
   float healthBarSectionX = UNIT_X * 2;
@@ -255,7 +256,7 @@ void speedUpEnemies() {
 }
 
 void mousePressed() {
-  if (GAME_STARTED) {
+  if (TITLE_SCREEN.isStarted()) {
     int pressedIndex = -1;
     for (int i = 0; i < SILHOUETTES.length; i++) {
       // Getting hurt stuns the player briefly, preventing movement
@@ -290,10 +291,10 @@ void mousePressed() {
     
     if (!DELI_SHOP.isActive()) {
       // User can quickly start a new game instead of waiting for the timer to finish  
-      GAME_OVER_TIMER.time = GAME_OVER_TIMER.timeMax;
+      TITLE_SCREEN.forceReset();
     }
   } else {
-    GAME_STARTED = true;
+    TITLE_SCREEN.setStartState(true);
     setupGame();
   }
 
@@ -302,24 +303,8 @@ void mousePressed() {
 void checkGameOverTimer() {
   // Pause for a brief period after a game over, then reset the game
   if (!DELI_SHOP.isActive()) {
-    GAME_OVER_TIMER.tick();
-    if (GAME_OVER_TIMER.isOvertime()) {
-      GAME_OVER_TIMER.reset();
-      GAME_STARTED = false;
-    }
+    TITLE_SCREEN.resetByTimer();
   }
-}
-
-void drawTitleScreen() {
-  background(49, 52, 74);
-  noTint();
-  imageMode(CENTER);
-  image(SNAKE_BOXER_LOGO, width * 0.5, height * 0.25, UNIT_X * 60, UNIT_Y * 30);
-  
-  textSize(UNIT_X * 2);
-  fill(255);
-  text("PROTECT THE DELI SHOP!\n\nPRESS THE SCREEN TO MOVE AROUND!\nALSO PRESS TO PUNCH!",
-       width * 0.22, height * 0.6);
 }
 
 void keyPressed() {
@@ -329,8 +314,8 @@ void keyPressed() {
 }
 
 void draw() {
-  if (!GAME_STARTED) {
-    drawTitleScreen();
+  if (!TITLE_SCREEN.isStarted()) {
+    TITLE_SCREEN.drawTitleScreen();
   } else {
     BACKDROP.drawBackground();
     drawHealthBar();
