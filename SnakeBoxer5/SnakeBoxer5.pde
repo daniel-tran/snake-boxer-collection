@@ -1,3 +1,18 @@
+TitleScreen TITLE_SCREEN;
+float UNIT_X;
+float UNIT_Y;
+float ZONE_ATTACK;
+float ZONE_BLOCK;
+float ZONE_MOVE_UP;
+float ZONE_MOVE_DOWN;
+Fighter PLAYER;
+AIFighter ENEMY;
+Background BACKDROP;
+
+// These global variables are placed here to make it easier to adjust the difficulty of the game.
+// Number of lives allowed in the game
+int PLAYER_LIVES = 3;
+
 void setup() {
   fullScreen();
   //size(960, 540); // Approximate screen resolution for the Moto E (2nd generation)
@@ -25,17 +40,53 @@ void setup() {
   BACKDROP = new Background(6, 0, 0);
 }
 
-TitleScreen TITLE_SCREEN;
-float UNIT_X;
-float UNIT_Y;
-float ZONE_ATTACK;
-float ZONE_BLOCK;
-float ZONE_MOVE_UP;
-float ZONE_MOVE_DOWN;
+void mousePressed() {
+  // User has made an attack.
+  // This logic is not called during draw() to prevent continuous attacking
+  // by holding down a single key.
+  // Also check the sprite to avoid quick recovery after getting hurt.
+  if (TITLE_SCREEN.isStarted() && mouseX < ZONE_ATTACK && PLAYER.isPlayable() && !PLAYER.isUsingHurtImage()) {
+    PLAYER.startAttack();
+  }
+  
+  if (!TITLE_SCREEN.isStarted()) {
+    TITLE_SCREEN.setStartState(true);
+    setupPlayers();
+  } else if (PLAYER.isUsingGameOverImage() || ENEMY.isUsingGameOverImage()) {
+    // User can quickly start a new game instead of waiting for the timer to finish 
+    TITLE_SCREEN.forceReset();
+  }
+}
 
-Fighter PLAYER;
-AIFighter ENEMY;
-Background BACKDROP;
+void keyPressed() {
+  // Use this to debug by manually triggering an event, such as enemy health loss
+  //PLAYER.startHurt(95);
+}
+
+void draw() {
+  if (TITLE_SCREEN.isStarted()) {
+    BACKDROP.drawBackground();
+
+    // Draw UI components before the fighters to ensure that any possible overlap
+    // results in the fighters getting visual priority when drawing.
+    drawPlayerLives();
+    drawScore();
+    drawHealthBars();
+
+    // Draw player and enemy
+    float fighterMinY = height * 0.21;
+    float fighterMaxY = height * 0.71;
+    drawPlayer(fighterMinY, fighterMaxY);
+    drawEnemy(fighterMinY, fighterMaxY);
+
+    // Process general state changes after everything has been drawn
+    registerDamage();
+    updateStalling();
+    checkGameOverTimer();
+  } else {
+    TITLE_SCREEN.drawTitleScreen();
+  }
+}
 
 void setupPlayers() {
   PLAYER = new Fighter(width * 0.55, height * 0.45,
@@ -47,7 +98,7 @@ void setupPlayers() {
                          "characters/BoxerJoe/BoxerJoe_Attack2.png"
                        },
                        UNIT_X * 22, UNIT_Y * 22);
-  PLAYER.setLives(3);
+  PLAYER.setLives(PLAYER_LIVES);
   PLAYER.isFlippedX = true;
   
   ENEMY = new AIFighter(width * 0.425, PLAYER.y,
@@ -207,53 +258,5 @@ void checkGameOverTimer() {
   // Pause for a brief period after a game over, then reset the game
   if (PLAYER.isUsingGameOverImage() || ENEMY.isUsingGameOverImage()) {
     TITLE_SCREEN.resetByTimer();
-  }
-}
-
-void mousePressed() {
-  // User has made an attack.
-  // This logic is not called during draw() to prevent continuous attacking
-  // by holding down a single key.
-  // Also check the sprite to avoid quick recovery after getting hurt.
-  if (TITLE_SCREEN.isStarted() && mouseX < ZONE_ATTACK && PLAYER.isPlayable() && !PLAYER.isUsingHurtImage()) {
-    PLAYER.startAttack();
-  }
-  
-  if (!TITLE_SCREEN.isStarted()) {
-    TITLE_SCREEN.setStartState(true);
-    setupPlayers();
-  } else if (PLAYER.isUsingGameOverImage() || ENEMY.isUsingGameOverImage()) {
-    // User can quickly start a new game instead of waiting for the timer to finish 
-    TITLE_SCREEN.forceReset();
-  }
-}
-
-void keyPressed() {
-  // Use this to debug by manually triggering an event, such as enemy health loss
-  //PLAYER.startHurt(95);
-}
-
-void draw() {
-  if (TITLE_SCREEN.isStarted()) {
-    BACKDROP.drawBackground();
-
-    // Draw UI components before the fighters to ensure that any possible overlap
-    // results in the fighters getting visual priority when drawing.
-    drawPlayerLives();
-    drawScore();
-    drawHealthBars();
-
-    // Draw player and enemy
-    float fighterMinY = height * 0.21;
-    float fighterMaxY = height * 0.71;
-    drawPlayer(fighterMinY, fighterMaxY);
-    drawEnemy(fighterMinY, fighterMaxY);
-
-    // Process general state changes after everything has been drawn
-    registerDamage();
-    updateStalling();
-    checkGameOverTimer();
-  } else {
-    TITLE_SCREEN.drawTitleScreen();
   }
 }

@@ -1,3 +1,15 @@
+float UNIT_X;
+float UNIT_Y;
+Fighter PLAYER;
+Fighter ENEMY;
+ClickableButton UPGRADE_BUTTON;
+DialogBoxUpgrade UPGRADE_MENU;
+ClickableButton RANK_UP_BUTTON;
+DialogBoxRankUp RANK_UP_MENU;
+ClickableButton EVENT_BUTTON;
+DialogBoxEvent EVENT_MENU;
+TitleScreen TITLE_SCREEN;
+
 void setup() {
   fullScreen();
   //size(960, 540); // Approximate screen resolution for the Moto E (2nd generation)
@@ -73,89 +85,6 @@ void setup() {
   EVENT_MENU.setTextSize(buttonFontSize);
   EVENT_MENU.setText("Random event!", "FLAGRANT SYSTEM ERROR!");
 }
-
-void setUpgradeMenuHeading() {
-  UPGRADE_MENU.setText(RANK_UP_MENU.getCurrentRank() + " Upgrades", "");
-}
-
-void drawBackground() {
-  // Draw sky stripes.
-  // Use background() to set the colour of the largest sky stripe.
-  background(106, 155, 188);
-  rectMode(CORNER);
-  fill(137, 186, 219);
-  float skyStripeHeightFirst = height * 0.1;
-  float skyStripeHeightSecond = height * 0.15;
-  rect(0, 0, width, skyStripeHeightFirst);
-  fill(123, 172, 205);
-  rect(0, skyStripeHeightFirst, width, skyStripeHeightSecond);
-  
-  // Draw hills. These are mirrored and are separated by some space.
-  fill(0, 102, 0);
-  stroke(0, 102, 0);
-  strokeWeight(1);
-  rectMode(CORNERS);
-  // Height units are multiples of the global Y unit, specifying the height of the right hill columns.
-  float[] hillHeightUnits = {
-    1, 2, 3, 3, 4, 4, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 7, 7, 7, 7,
-    6, 6, 6, 6, 5, 5, 5, 5, 6, 6, 6, 5, 5
-  };
-  float hillSeparationDistance = UNIT_X * 27;
-  float hillLeftXInitial = width * 0.35;
-  float hillRightXInitial = hillLeftXInitial + hillSeparationDistance;
-  float hillY = height * 0.5;
-  for (int i = 0; i < hillHeightUnits.length; i++) {
-    float hillColumnWidth = UNIT_X;
-    float hillHeight = hillY - (UNIT_Y * hillHeightUnits[i]);
-    float hillLeftX = hillLeftXInitial - (UNIT_X * i);
-    // Draw the left hill
-    rect(hillLeftX, hillY, hillLeftX - hillColumnWidth, hillHeight);
-    
-    // Draw the right hill
-    float hillRightX = hillRightXInitial + (UNIT_X * i);
-    rect(hillRightX, hillY, hillRightX + hillColumnWidth, hillHeight);
-  }
-  noStroke();
-  
-  // Draw land stripes with alternating colours
-  rectMode(CORNER);
-  float horizonY = height * 0.5;
-  int landStripeCount = 6;
-  float landStripeHeight = horizonY / landStripeCount;
-  for (int i = 0; i < landStripeCount; i++) {
-    if (i % 2 == 0) {
-      fill(1, 153, 52);
-    } else {
-      fill(0, 132, 43);
-    }
-    
-    rect(0, horizonY + (landStripeHeight * i), width, landStripeHeight);
-  }
-  
-  // Draw road as a series of smaller rectangles, increasing in width
-  fill(204);
-  float roadStripeXInitial = hillLeftXInitial;
-  float roadStripeWidthInitial = hillSeparationDistance;
-  float roadStripeHeight = landStripeHeight * 0.5;
-  for (int i = 0; i < landStripeCount * 2; i++) {
-    float roadStripeX = roadStripeXInitial - (UNIT_X * i);
-    float roadStripeY = horizonY + (roadStripeHeight * i);
-    float roadStripeWidth = roadStripeWidthInitial + (UNIT_X * 2 * i);
-    rect(roadStripeX, roadStripeY, roadStripeWidth, roadStripeHeight);
-  }
-}
-
-float UNIT_X;
-float UNIT_Y;
-Fighter PLAYER;
-Fighter ENEMY;
-ClickableButton UPGRADE_BUTTON;
-DialogBoxUpgrade UPGRADE_MENU;
-ClickableButton RANK_UP_BUTTON;
-DialogBoxRankUp RANK_UP_MENU;
-ClickableButton EVENT_BUTTON;
-DialogBoxEvent EVENT_MENU;
-TitleScreen TITLE_SCREEN;
 
 void mousePressed() {
   // The initial press to get past the title screen should not count as scoring
@@ -251,5 +180,76 @@ void draw() {
     EVENT_MENU.drawDialogBox();
     
     UPGRADE_MENU.processIdleTimer();
+  }
+}
+
+void setUpgradeMenuHeading() {
+  UPGRADE_MENU.setText(RANK_UP_MENU.getCurrentRank() + " Upgrades", "");
+}
+
+void drawBackground() {
+  // Draw sky stripes.
+  // Use background() to set the colour of the largest sky stripe.
+  background(106, 155, 188);
+  rectMode(CORNER);
+  fill(137, 186, 219);
+  float skyStripeHeightFirst = height * 0.1;
+  float skyStripeHeightSecond = height * 0.15;
+  rect(0, 0, width, skyStripeHeightFirst);
+  fill(123, 172, 205);
+  rect(0, skyStripeHeightFirst, width, skyStripeHeightSecond);
+  
+  // Draw hills. These are mirrored and are separated by some space.
+  fill(0, 102, 0);
+  stroke(0, 102, 0);
+  strokeWeight(1);
+  rectMode(CORNERS);
+  // Height units are multiples of the global Y unit, specifying the height of the right hill columns.
+  float[] hillHeightUnits = {
+    1, 2, 3, 3, 4, 4, 5, 5, 5, 6, 6, 6, 6, 7, 7, 7, 7, 8, 8, 8, 8, 7, 7, 7, 7,
+    6, 6, 6, 6, 5, 5, 5, 5, 6, 6, 6, 5, 5
+  };
+  float hillSeparationDistance = UNIT_X * 27;
+  float hillLeftXInitial = width * 0.35;
+  float hillRightXInitial = hillLeftXInitial + hillSeparationDistance;
+  float hillY = height * 0.5;
+  for (int i = 0; i < hillHeightUnits.length; i++) {
+    float hillColumnWidth = UNIT_X;
+    float hillHeight = hillY - (UNIT_Y * hillHeightUnits[i]);
+    float hillLeftX = hillLeftXInitial - (UNIT_X * i);
+    // Draw the left hill
+    rect(hillLeftX, hillY, hillLeftX - hillColumnWidth, hillHeight);
+    
+    // Draw the right hill
+    float hillRightX = hillRightXInitial + (UNIT_X * i);
+    rect(hillRightX, hillY, hillRightX + hillColumnWidth, hillHeight);
+  }
+  noStroke();
+  
+  // Draw land stripes with alternating colours
+  rectMode(CORNER);
+  float horizonY = height * 0.5;
+  int landStripeCount = 6;
+  float landStripeHeight = horizonY / landStripeCount;
+  for (int i = 0; i < landStripeCount; i++) {
+    if (i % 2 == 0) {
+      fill(1, 153, 52);
+    } else {
+      fill(0, 132, 43);
+    }
+    
+    rect(0, horizonY + (landStripeHeight * i), width, landStripeHeight);
+  }
+  
+  // Draw road as a series of smaller rectangles, increasing in width
+  fill(204);
+  float roadStripeXInitial = hillLeftXInitial;
+  float roadStripeWidthInitial = hillSeparationDistance;
+  float roadStripeHeight = landStripeHeight * 0.5;
+  for (int i = 0; i < landStripeCount * 2; i++) {
+    float roadStripeX = roadStripeXInitial - (UNIT_X * i);
+    float roadStripeY = horizonY + (roadStripeHeight * i);
+    float roadStripeWidth = roadStripeWidthInitial + (UNIT_X * 2 * i);
+    rect(roadStripeX, roadStripeY, roadStripeWidth, roadStripeHeight);
   }
 }

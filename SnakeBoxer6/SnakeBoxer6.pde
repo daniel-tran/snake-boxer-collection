@@ -1,3 +1,25 @@
+float UNIT_X;
+float UNIT_Y;
+float ZONE_ATTACK;
+float ZONE_BLOCK;
+float ZONE_MOVE_UP;
+float ZONE_MOVE_DOWN;
+
+Background BACKDROP;
+Fighter PLAYER;
+AIFighter ENEMY;
+Timer READY_TIMER = new Timer(1, 30, false);
+Timer GO_TIMER = new Timer(1, 30, false);
+Timer BACK_TO_FIGHTER_SELECTION_TIMER = new Timer(1, 60, false);
+WorldMap WORLD;
+
+FighterSelection FIGHTER_SELECTION;
+boolean HAS_STARTED_1P_GAME;
+// Title screen start state is to track the transition from title screen to fighter selection.
+// Another variable is needed to track whether the user has transitioned to the fight.
+TitleScreen TITLE_SCREEN;
+boolean GAME_STARTED = false;
+
 void setup() {
   fullScreen();
   //size(600, 400);
@@ -21,10 +43,107 @@ void setup() {
   TITLE_SCREEN.setGeneralItemImage("titlescreen/SnakeBoxer_BoxArt.png",
                                    width * 0.75, height * 0.75, UNIT_X * 27, UNIT_Y * 27);
 
-  setupGame();
-  setupWorldDefault();
+  // Need to set up the World during setup, since the draw() function uses it to check for the game state
+  WORLD = new WorldMap(UNIT_X, UNIT_Y, width, height, "BOXER JOE");
   
   setupFighterSelection();
+}
+
+void mousePressed() {
+  if (WORLD.locationIndex < 0) {
+    if (!TITLE_SCREEN.isStarted()) {
+      // Title screen
+      // Press any part of the screen to move beyond the title screen.
+      TITLE_SCREEN.setStartState(true);
+    } else if (HAS_STARTED_1P_GAME) {
+      // Location selection screen
+      if (WORLD.locationIndex < 0) {
+        WORLD.locationIndex = WORLD.getLocation(mouseX, mouseY);
+        // Pick a location and load the fight
+        if (WORLD.locationIndex >= 0) {
+          GAME_STARTED = true;
+          BACKDROP = WORLD.locationBackground[WORLD.locationIndex];
+          ENEMY = WORLD.getLocationFighter(WORLD.locationIndex);
+          WORLD.hasFightStarted = false;
+          
+          PLAYER.y = ENEMY.y;
+          PLAYER.hp = PLAYER.hpMax;
+          PLAYER.isStalled = true;
+          ENEMY.isStalled = true;
+          READY_TIMER.reset();
+          GO_TIMER.reset();
+        }
+      }
+    } else {
+      // Fighter selection screen
+      FIGHTER_SELECTION.updateFighterSelection();
+      FIGHTER_SELECTION.updateModeSelection(mouseX, mouseY);
+      
+      if (FIGHTER_SELECTION.hasSelectedFighter() && FIGHTER_SELECTION.hasPressedStart(mouseX, mouseY) && !GAME_STARTED) {
+        HAS_STARTED_1P_GAME = true;
+        PLAYER = new Fighter(width * 0.55, height * 0.45, UNIT_X * 22, UNIT_Y * 22, FIGHTER_SELECTION.getPresetNameOfPlayer(0));
+        PLAYER.setLives(3);
+        PLAYER.isFlippedX = true;
+        // Set the world after the player is set up to perform enemy exclusion (player cannot fight their own character copy)
+        setupWorld();
+      }
+    }
+  } else {
+    // User has made an attack.
+    // This logic is not called during draw() to prevent continuous attacking
+    // by holding down a single key.
+    // Also check the sprite to avoid quick recovery after getting hurt.
+    if (GAME_STARTED && mouseX < ZONE_ATTACK && PLAYER.isPlayable() &&
+        !PLAYER.isUsingHurtImage() && !PLAYER.isUsingAttackImage()) {
+      PLAYER.startAttack();
+    }
+  }
+  
+  // This is the last action to ensure the user can't select a fighter and
+  // move past the title screen at the same time.
+  if (WORLD.isFadingBack) {
+    // User pressed the screen after clearing 1P mode
+    returnToFighterSelection();
+  }
+}
+
+void keyPressed() {
+  // Use this to debug by manually triggering an event, such as enemy health loss
+  //PLAYER.startHurt(95);
+  //ENEMY.startHurt(95);
+  // Toggle between 1P and 2P mode
+  //FIGHTER_SELECTION.playersCount = (FIGHTER_SELECTION.playersCount % 2) + 1;
+  //FIGHTER_SELECTION.playerSelectionIndex = 0;
+}
+
+void draw() {
+  if (WORLD.locationIndex < 0) {
+    if (!TITLE_SCREEN.isStarted()) {
+      TITLE_SCREEN.drawTitleScreen();
+    } else if (HAS_STARTED_1P_GAME) {
+      WORLD.drawMap();
+    } else {
+      FIGHTER_SELECTION.drawFighterSelection();
+    }
+  } else {
+    BACKDROP.drawBackground();
+    drawHealthBars();
+    
+    drawPlayer();
+    drawEnemy();
+    registerDamage();
+    updateStalling();
+    
+    drawFightText();
+    WORLD.updateFightStatus(ENEMY.isUsingGameOverImage());
+    WORLD.drawWhiteOut();
+    
+    // Allow a way to return to the fighter selection screen from a fight
+    if (BACK_TO_FIGHTER_SELECTION_TIMER.isOvertime()) {
+      BACK_TO_FIGHTER_SELECTION_TIMER.reset();
+      returnToFighterSelection();
+    }
+  }
 }
 
 void setupFighterSelection() {
@@ -41,76 +160,16 @@ void resetFighterSelection() {
   FIGHTER_SELECTION.reset();
 }
 
-void setupWorldDefault() {
-  WORLD = new WorldMap(UNIT_X, UNIT_Y, width, height, PLAYER.name);
-}
-
 void setupWorld() {
   if (FIGHTER_SELECTION.playersCount <= 1) {
-    setupWorldDefault();
+    // Player's fighter selection affects the opponents in 1P mode
+    WORLD = new WorldMap(UNIT_X, UNIT_Y, width, height, PLAYER.name);
   } else {
     WORLD = new WorldMap(UNIT_X, UNIT_Y, width, height,
                          FIGHTER_SELECTION.getPresetNameOfPlayer(0),
                          FIGHTER_SELECTION.getPresetNameOfPlayer(1));
   }
 }
-
-void setupGame() {
-  BACKDROP = new Background(-6, height * 0.15, UNIT_X);
-  
-  PLAYER = new Fighter(width * 0.55, height * 0.45,
-                       "characters/BoxerJoe/BoxerJoe_Idle.png",
-                       "characters/BoxerJoe/BoxerJoe_Block.png",
-                       "characters/BoxerJoe/BoxerJoe_Hurt.png",
-                       new String[]{
-                         "characters/BoxerJoe/BoxerJoe_Attack1.png",
-                         "characters/BoxerJoe/BoxerJoe_Attack2.png"
-                       },
-                       UNIT_X * 22, UNIT_Y * 22);
-  PLAYER.setLives(3);
-  PLAYER.isFlippedX = true;
-  PLAYER.assignName("BOXER JOE");
-  PLAYER.setChargeAttack("characters/IceBreaker/IceBreaker_Charged.png",
-                         "characters/IceBreaker/IceBreaker_Attack3.png");
-                         
-  ENEMY = new AIFighter(width * 0.425, height * 0.45,
-                       "characters/Snake/Snake_Idle.png",
-                       "characters/Snake/Snake_Block.png",
-                       "characters/Snake/Snake_Hurt.png",
-                       new String[]{
-                         "characters/Snake/Snake_Attack1.png"
-                       },
-                       UNIT_X * 22, UNIT_Y * 22);
-  ENEMY.setChargeAttack("characters/IceBreaker/IceBreaker_Charged.png",
-                        "characters/IceBreaker/IceBreaker_Attack3.png");
-  ENEMY.setLives(2);
-  
-  READY_TIMER = new Timer(1, 30, false);
-  GO_TIMER = new Timer(1, 30, false);
-  BACK_TO_FIGHTER_SELECTION_TIMER = new Timer(1, 60, false);
-}
-
-float UNIT_X;
-float UNIT_Y;
-float ZONE_ATTACK;
-float ZONE_BLOCK;
-float ZONE_MOVE_UP;
-float ZONE_MOVE_DOWN;
-
-Background BACKDROP;
-Fighter PLAYER;
-AIFighter ENEMY;
-Timer READY_TIMER;
-Timer GO_TIMER;
-Timer BACK_TO_FIGHTER_SELECTION_TIMER;
-WorldMap WORLD;
-
-FighterSelection FIGHTER_SELECTION;
-boolean HAS_STARTED_1P_GAME;
-// Title screen start state is to track the transition from title screen to fighter selection.
-// Another variable is needed to track whether the user has transitioned to the fight.
-TitleScreen TITLE_SCREEN;
-boolean GAME_STARTED = false;
 
 void drawHealthBars() {
   float healthBarSectionX = UNIT_X * 2;
@@ -280,10 +339,6 @@ void drawFightText() {
   text(fightText, width * 0.5, height * 0.3);
 }
 
-void drawFighterSelection() {
-  FIGHTER_SELECTION.drawFighterSelection();
-}
-
 void registerDamage() {
   // Player hit registration is determined first to prevent them
   // from overriding the enemy's attack
@@ -329,101 +384,4 @@ void returnToFighterSelection() {
   // Game has been finished
   setupWorld();
   resetFighterSelection();
-}
-
-void mousePressed() {
-  if (WORLD.locationIndex < 0) {
-    if (!TITLE_SCREEN.isStarted()) {
-      // Title screen
-      // Press any part of the screen to move beyond the title screen.
-      TITLE_SCREEN.setStartState(true);
-    } else if (HAS_STARTED_1P_GAME) {
-      // Location selection screen
-      if (WORLD.locationIndex < 0) {
-        WORLD.locationIndex = WORLD.getLocation(mouseX, mouseY);
-        // Pick a location and load the fight
-        if (WORLD.locationIndex >= 0) {
-          GAME_STARTED = true;
-          BACKDROP = WORLD.locationBackground[WORLD.locationIndex];
-          ENEMY = WORLD.getLocationFighter(WORLD.locationIndex);
-          WORLD.hasFightStarted = false;
-          
-          PLAYER.y = ENEMY.y;
-          PLAYER.hp = PLAYER.hpMax;
-          PLAYER.isStalled = true;
-          ENEMY.isStalled = true;
-          READY_TIMER.reset();
-          GO_TIMER.reset();
-        }
-      }
-    } else {
-      // Fighter selection screen
-      FIGHTER_SELECTION.updateFighterSelection();
-      FIGHTER_SELECTION.updateModeSelection(mouseX, mouseY);
-      
-      if (FIGHTER_SELECTION.hasSelectedFighter() && FIGHTER_SELECTION.hasPressedStart(mouseX, mouseY) && !GAME_STARTED) {
-        HAS_STARTED_1P_GAME = true;
-        PLAYER = new Fighter(width * 0.55, height * 0.45, UNIT_X * 22, UNIT_Y * 22, FIGHTER_SELECTION.getPresetNameOfPlayer(0));
-        PLAYER.setLives(3);
-        PLAYER.isFlippedX = true;
-        // Set the world after the player is set up to perform enemy exclusion (player cannot fight their own character copy)
-        setupWorld();
-      }
-    }
-  } else {
-    // User has made an attack.
-    // This logic is not called during draw() to prevent continuous attacking
-    // by holding down a single key.
-    // Also check the sprite to avoid quick recovery after getting hurt.
-    if (GAME_STARTED && mouseX < ZONE_ATTACK && PLAYER.isPlayable() &&
-        !PLAYER.isUsingHurtImage() && !PLAYER.isUsingAttackImage()) {
-      PLAYER.startAttack();
-    }
-  }
-  
-  // This is the last action to ensure the user can't select a fighter and
-  // move past the title screen at the same time.
-  if (WORLD.isFadingBack) {
-    // User pressed the screen after clearing 1P mode
-    returnToFighterSelection();
-  }
-}
-
-void keyPressed() {
-  // Use this to debug by manually triggering an event, such as enemy health loss
-  //PLAYER.startHurt(95);
-  //ENEMY.startHurt(95);
-  // Toggle between 1P and 2P mode
-  //FIGHTER_SELECTION.playersCount = (FIGHTER_SELECTION.playersCount % 2) + 1;
-  //FIGHTER_SELECTION.playerSelectionIndex = 0;
-}
-
-void draw() {
-  if (WORLD.locationIndex < 0) {
-    if (!TITLE_SCREEN.isStarted()) {
-      TITLE_SCREEN.drawTitleScreen();
-    } else if (HAS_STARTED_1P_GAME) {
-      WORLD.drawMap();
-    } else {
-      drawFighterSelection();
-    }
-  } else {
-    BACKDROP.drawBackground();
-    drawHealthBars();
-    
-    drawPlayer();
-    drawEnemy();
-    registerDamage();
-    updateStalling();
-    
-    drawFightText();
-    WORLD.updateFightStatus(ENEMY.isUsingGameOverImage());
-    WORLD.drawWhiteOut();
-    
-    // Allow a way to return to the fighter selection screen from a fight
-    if (BACK_TO_FIGHTER_SELECTION_TIMER.isOvertime()) {
-      BACK_TO_FIGHTER_SELECTION_TIMER.reset();
-      returnToFighterSelection();
-    }
-  }
 }

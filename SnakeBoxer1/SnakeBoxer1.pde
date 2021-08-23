@@ -1,3 +1,26 @@
+float UNIT_X;
+float UNIT_Y;
+Background BACKDROP;
+DeliShop DELI_SHOP;
+Silhouette[] SILHOUETTES = new Silhouette[4];
+Fighter PLAYER;
+MovingEnemy[] ENEMIES;
+float ENEMY_SPAWN_UPPER_Y;
+float ENEMY_SPAWN_LOWER_Y;
+int LEVEL;
+int KNOCKOUTS;
+int[] LEVEL_BOUNDARIES = {12, 24, 48};
+int MAX_LEVEL_KNOCKOUTS;
+TitleScreen TITLE_SCREEN;
+
+// These global variables are placed here to make it easier to adjust the difficulty of the game.
+// Number of knockouts required to level up after reaching the max. level
+int MAX_LEVEL_KNOCKOUTS_BOUNDARY = 20;
+// Speed multiplier for enemies upon levelling up
+float ENEMY_SPEED_UP_FACTOR = 1.25;
+// Number of enemies to add upon levelling up
+int ENEMY_INC = 4;
+
 void setup() {
   fullScreen();
   //size(600, 400);
@@ -11,6 +34,70 @@ void setup() {
                                  "PROTECT THE DELI SHOP!\n\nPRESS THE SCREEN TO MOVE AROUND!\nALSO PRESS TO PUNCH!",
                                  width * 0.22, height * 0.6,
                                  UNIT_X, UNIT_Y);
+}
+
+void mousePressed() {
+  if (TITLE_SCREEN.isStarted()) {
+    int pressedIndex = -1;
+    for (int i = 0; i < SILHOUETTES.length; i++) {
+      // Getting hurt stuns the player briefly, preventing movement
+      if (SILHOUETTES[i].wasPressed(mouseX, mouseY) && !SILHOUETTES[i].isSelected &&
+          !PLAYER.isUsingHurtImage() && DELI_SHOP.isActive()) {
+        // New silhouette was selected, which means all others need be deselected
+        SILHOUETTES[i].isSelected = true;
+        pressedIndex = i;
+        // Reset attack timer during silhouette reselection, as it counts
+        // as a newly made attack
+        PLAYER.attack1Timer.reset();
+        break;
+      }
+    }
+    
+    if (pressedIndex >= 0) {
+      for (int i = 0; i < SILHOUETTES.length; i++) {
+        // Deselect all unselected silhouettes
+        if (i != pressedIndex) {
+          SILHOUETTES[i].isSelected = false;
+        }
+      }
+    }
+    
+    // User has made an attack.
+    // This logic is not called during draw() to prevent continuous attacking
+    // by holding down a single key.
+    // Also check the sprite to avoid quick recovery after getting hurt.
+    if (PLAYER.isPlayable() && !PLAYER.isUsingHurtImage() && DELI_SHOP.isActive()) {
+      PLAYER.startAttack();
+    }
+    
+    if (!DELI_SHOP.isActive()) {
+      // User can quickly start a new game instead of waiting for the timer to finish
+      TITLE_SCREEN.forceReset();
+    }
+  } else {
+    TITLE_SCREEN.setStartState(true);
+    setupGame();
+  }
+
+}
+
+void keyPressed() {
+  //increaseDifficulty();
+  //speedUpEnemies();
+  // setupGame();
+}
+
+void draw() {
+  if (!TITLE_SCREEN.isStarted()) {
+    TITLE_SCREEN.drawTitleScreen();
+  } else {
+    BACKDROP.drawBackground();
+    drawHealthBar();
+    drawScoreAndLevel();
+    drawUserResources();
+    drawEnemies();
+    checkGameOverTimer();
+  }
 }
 
 void setupGame() {
@@ -63,21 +150,6 @@ void setupGame() {
   ENEMIES = new MovingEnemy[16];
   increaseDifficulty();
 }
-
-float UNIT_X;
-float UNIT_Y;
-Background BACKDROP;
-DeliShop DELI_SHOP;
-Silhouette[] SILHOUETTES = new Silhouette[4];
-Fighter PLAYER;
-MovingEnemy[] ENEMIES;
-float ENEMY_SPAWN_UPPER_Y;
-float ENEMY_SPAWN_LOWER_Y;
-int LEVEL;
-int KNOCKOUTS;
-int[] LEVEL_BOUNDARIES = {12, 24, 48};
-int MAX_LEVEL_KNOCKOUTS;
-TitleScreen TITLE_SCREEN;
 
 void drawHealthBar() {
   float healthBarSectionX = UNIT_X * 2;
@@ -200,13 +272,12 @@ void registerKnockout() {
       speedUpEnemies();
     }
   } else if (KNOCKOUTS >= LEVEL_BOUNDARIES[LEVEL_BOUNDARIES.length - 1]) {
-    int maxLevelKnockoutsBoundary = 20;
     MAX_LEVEL_KNOCKOUTS++;
     
     // After hitting the max level, the player can keep levelling up
     // but it only makes the existing enemies more difficult, since
     // all the enemies are currently utilised
-    if (MAX_LEVEL_KNOCKOUTS == maxLevelKnockoutsBoundary) {
+    if (MAX_LEVEL_KNOCKOUTS == MAX_LEVEL_KNOCKOUTS_BOUNDARY) {
       MAX_LEVEL_KNOCKOUTS = 0;
       increaseDifficulty();
       speedUpEnemies();
@@ -220,10 +291,8 @@ void increaseDifficulty() {
                          "characters/Snake/Snake_Idle2.png"};
   float[] possibleX = {0, width};
   float[] possibleY = {ENEMY_SPAWN_UPPER_Y, ENEMY_SPAWN_LOWER_Y};
-  // Number of enemies to add
-  int enemyInc = 4;
-  int firstEnemyIndex = LEVEL * enemyInc;
-  int lastEnemyIndex = firstEnemyIndex + enemyInc;
+  int firstEnemyIndex = LEVEL * ENEMY_INC;
+  int lastEnemyIndex = firstEnemyIndex + ENEMY_INC;
   LEVEL++;
   
   // Maximum level is when all enemies are utilised
@@ -247,81 +316,16 @@ void increaseDifficulty() {
 }
 
 void speedUpEnemies() {
-  float enemySpeedUpFactor = 1.25;
   for (int i = 0; i < ENEMIES.length; i++) {
     if (ENEMIES[i] != null) {
-      ENEMIES[i].speedXMultiplier *= enemySpeedUpFactor;
+      ENEMIES[i].speedXMultiplier *= ENEMY_SPEED_UP_FACTOR;
     }
   }
-}
-
-void mousePressed() {
-  if (TITLE_SCREEN.isStarted()) {
-    int pressedIndex = -1;
-    for (int i = 0; i < SILHOUETTES.length; i++) {
-      // Getting hurt stuns the player briefly, preventing movement
-      if (SILHOUETTES[i].wasPressed(mouseX, mouseY) && !SILHOUETTES[i].isSelected &&
-          !PLAYER.isUsingHurtImage() && DELI_SHOP.isActive()) {
-        // New silhouette was selected, which means all others need be deselected
-        SILHOUETTES[i].isSelected = true;
-        pressedIndex = i;
-        // Reset attack timer during silhouette reselection, as it counts
-        // as a newly made attack
-        PLAYER.attack1Timer.reset();
-        break;
-      }
-    }
-    
-    if (pressedIndex >= 0) {
-      for (int i = 0; i < SILHOUETTES.length; i++) {
-        // Deselect all unselected silhouettes
-        if (i != pressedIndex) {
-          SILHOUETTES[i].isSelected = false;
-        }
-      }
-    }
-    
-    // User has made an attack.
-    // This logic is not called during draw() to prevent continuous attacking
-    // by holding down a single key.
-    // Also check the sprite to avoid quick recovery after getting hurt.
-    if (PLAYER.isPlayable() && !PLAYER.isUsingHurtImage() && DELI_SHOP.isActive()) {
-      PLAYER.startAttack();
-    }
-    
-    if (!DELI_SHOP.isActive()) {
-      // User can quickly start a new game instead of waiting for the timer to finish  
-      TITLE_SCREEN.forceReset();
-    }
-  } else {
-    TITLE_SCREEN.setStartState(true);
-    setupGame();
-  }
-
 }
 
 void checkGameOverTimer() {
   // Pause for a brief period after a game over, then reset the game
   if (!DELI_SHOP.isActive()) {
     TITLE_SCREEN.resetByTimer();
-  }
-}
-
-void keyPressed() {
-  //increaseDifficulty();
-  //speedUpEnemies();
-  // setupGame();
-}
-
-void draw() {
-  if (!TITLE_SCREEN.isStarted()) {
-    TITLE_SCREEN.drawTitleScreen();
-  } else {
-    BACKDROP.drawBackground();
-    drawHealthBar();
-    drawScoreAndLevel();
-    drawUserResources();
-    drawEnemies();
-    checkGameOverTimer();
   }
 }

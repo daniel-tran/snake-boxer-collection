@@ -1,3 +1,46 @@
+Fighter PLAYER;
+MovingEnemy[] ENEMIES;
+MovingCollectible[] COLLECTIBLES;
+float UNIT_X;
+float UNIT_Y;
+float PLAYER_BOUNDARY_MIN_Y;
+float PLAYER_BOUNDARY_MAX_Y;
+float ENEMY_RESET_X;
+int SCORE;
+int LEVEL;
+int MAX_LEVEL_SCORE;
+TitleScreen TITLE_SCREEN;
+String[] FILENAMES_POSITIVE = {"items/Strawberry.png",
+                               "items/Beer.png",
+                               "items/RoastPig.png",
+                               "items/Egg.png"};
+String[] FILENAMES_NEGATIVE = {"items/Arrow.png",
+                               "items/Bomb.png"};
+PImage[] SHOWCASE_COLLECTIBLES_POSITIVE;
+PImage[] SHOWCASE_COLLECTIBLES_NEGATIVE;
+Background BACKDROP;
+boolean JOYSTICK_ACTIVE;
+
+// These global variables are placed here to make it easier to adjust the difficulty of the game.
+// Number of enemies to add upon levelling up
+int ENEMY_INC = 4;
+// Number of collectibles to add upon levelling up
+int COLLECTIBLE_INC = 2;
+// Score increment upon defeating an enemy
+int ENEMY_SCORE_INCREMENT = 50;
+// Score decrement upon colliding with an enemy
+int ENEMY_SCORE_DECREMENT = -ENEMY_SCORE_INCREMENT;
+// Health loss amount upon colliding with an enemy
+int BASE_HURT_DAMAGE = 5;
+// Score boundaries that enable a level up
+int[] LEVEL_BOUNDARIES = {500, 1000, 2000};
+// Score boundary that enables a level up when at the max. level
+int MAX_LEVEL_SCORE_BOUNDARY = 1000;
+// Speed multiplier for enemies upon levelling up
+float ENEMY_SPEED_UP_FACTOR = 1.25;
+// Speed multiplier for collectibles upon levelling up
+float COLLECTIBLE_SPEED_UP_FACTOR = ENEMY_SPEED_UP_FACTOR;
+
 void setup() {
   fullScreen();
   //size(600, 400);
@@ -29,6 +72,54 @@ void setup() {
   setupGame();
 }
 
+void keyPressed() {
+  // Since there is no multi-touch on a PC, this is used as the computer specific
+  // way for making an attack while already moving.
+  registerPlayerAttack();
+}
+
+void mousePressed() {
+  // Since there is no keyboard enabled while running on an Android device,
+  // this is used as the computer alternative of touching the screen.
+  registerPlayerAttack();
+}
+
+void mouseReleased() {
+  resetJoystick();
+}
+
+void touchStarted() {
+  // This is a special in-built function that is only called when touching the
+  // screen while running on an Android device.
+  // It is not continuously called while the touch point is held down, so the player
+  // can still move around and make attacks.
+  //
+  // Note that since the touches array can't be used (otherwise this won't compile
+  // in Java mode), the x,y, coordinates of touch points after the first initial
+  // one can't be tracked.
+  // As a result of this technical limitation, the game exhibits a mechanical 
+  // behaviour where the player cannot move without first making an attack.
+  // As a side effect, this technically makes the game somewhat playable with
+  // one (left) hand.
+  registerPlayerAttack();
+}
+
+void draw() {
+  if (!TITLE_SCREEN.isStarted()) {
+    drawTitleScreen();
+  } else {
+    BACKDROP.drawBackground();
+    drawPlayer();
+    drawHealthBars();
+    drawScoreAndLevel();
+    drawJoystick();
+    drawEnemies();
+    drawCollectibles();
+    
+    checkGameOverTimer();
+  }
+}
+
 void setupGame() {
   LEVEL = 0;
   SCORE = 0;
@@ -57,11 +148,6 @@ void setupGame() {
 }
 
 void increaseDifficulty() {
-  // Number of enemies to add
-  int enemyInc = 4;
-  // Number of collectibles to add
-  int collectibleInc = 2;
-  
   float[] possibleX = {width + UNIT_X};
   // Possible Y coordinates for respawning is based on the height of the 
   // playable space split into separate lanes.
@@ -74,10 +160,10 @@ void increaseDifficulty() {
   }
   // Assign level dependent variables before incrementing the level
   // otherwise some enemies and collectibles won't be utilised
-  int firstEnemyIndex = LEVEL * enemyInc;
-  int lastEnemyIndex = firstEnemyIndex + enemyInc;
-  int firstCollectibleIndex = LEVEL * collectibleInc;
-  int lastCollectibleIndex = firstCollectibleIndex + collectibleInc;
+  int firstEnemyIndex = LEVEL * ENEMY_INC;
+  int lastEnemyIndex = firstEnemyIndex + ENEMY_INC;
+  int firstCollectibleIndex = LEVEL * COLLECTIBLE_INC;
+  int lastCollectibleIndex = firstCollectibleIndex + COLLECTIBLE_INC;
   LEVEL++;
   
   // Maximum level is when all enemies are utilised
@@ -119,51 +205,16 @@ void increaseDifficulty() {
 }
 
 void speedUpEnemies() {
-  float enemySpeedUpFactor = 1.25;
-  float collectibleSpeedUpFactor = enemySpeedUpFactor;
-  
   for (int i = 0; i < ENEMIES.length; i++) {
     if (ENEMIES[i] != null) {
-      ENEMIES[i].speedXMultiplier *= enemySpeedUpFactor;
+      ENEMIES[i].speedXMultiplier *= ENEMY_SPEED_UP_FACTOR;
     }
   }
   for (int i = 0; i < COLLECTIBLES.length; i++) {
     if (COLLECTIBLES[i] != null) {
-      COLLECTIBLES[i].speedXMultiplier *= collectibleSpeedUpFactor;
+      COLLECTIBLES[i].speedXMultiplier *= COLLECTIBLE_SPEED_UP_FACTOR;
     }
   }
-}
-
-void keyPressed() {
-  // Since there is no multi-touch on a PC, this is used as the computer specific
-  // way for making an attack while already moving.
-  registerPlayerAttack();
-}
-
-void mousePressed() {
-  // Since there is no keyboard enabled while running on an Android device,
-  // this is used as the computer alternative of touching the screen.
-  registerPlayerAttack();
-}
-
-void mouseReleased() {
-  resetJoystick();
-}
-
-void touchStarted() {
-  // This is a special in-built function that is only called when touching the
-  // screen while running on an Android device.
-  // It is not continuously called while the touch point is held down, so the player
-  // can still move around and make attacks.
-  //
-  // Note that since the touches array can't be used (otherwise this won't compile
-  // in Java mode), the x,y, coordinates of touch points after the first initial
-  // one can't be tracked.
-  // As a result of this technical limitation, the game exhibits a mechanical 
-  // behaviour where the player cannot move without first making an attack.
-  // As a side effect, this technically makes the game somewhat playable with
-  // one (left) hand.
-  registerPlayerAttack();
 }
 
 void registerPlayerAttack() {
@@ -181,29 +232,6 @@ void registerPlayerAttack() {
     setupGame();
   }
 }
-
-Fighter PLAYER;
-MovingEnemy[] ENEMIES; 
-MovingCollectible[] COLLECTIBLES;
-float UNIT_X;
-float UNIT_Y;
-float PLAYER_BOUNDARY_MIN_Y;
-float PLAYER_BOUNDARY_MAX_Y;
-float ENEMY_RESET_X;
-int SCORE;
-int LEVEL;
-int MAX_LEVEL_SCORE;
-TitleScreen TITLE_SCREEN;
-String[] FILENAMES_POSITIVE = {"items/Strawberry.png",
-                               "items/Beer.png",
-                               "items/RoastPig.png",
-                               "items/Egg.png"};
-String[] FILENAMES_NEGATIVE = {"items/Arrow.png",
-                               "items/Bomb.png"};
-PImage[] SHOWCASE_COLLECTIBLES_POSITIVE;
-PImage[] SHOWCASE_COLLECTIBLES_NEGATIVE;
-Background BACKDROP;
-boolean JOYSTICK_ACTIVE;
 
 void drawTitleScreen() {
   TITLE_SCREEN.drawTitleScreen();
@@ -300,8 +328,7 @@ void drawScoreAndLevel() {
 }
 
 void drawPlayer() {
-  imageMode(CENTER);
-  image(PLAYER.imgDrawn, PLAYER.x, PLAYER.y, PLAYER.imgWidth, PLAYER.imgHeight);
+  PLAYER.drawImage();
   keepPlayerInBoundaries();
   PLAYER.processAction();
 }
@@ -314,8 +341,6 @@ void keepPlayerInBoundaries() {
 }
 
 void drawEnemies() {
-  int enemyScoreIncrement = 50;
-
   for (int i = 0; i < ENEMIES.length; i++) {
     // Ignore enemies that haven't been loaded, since the level is too low
     if (ENEMIES[i] == null) {
@@ -342,7 +367,7 @@ void drawEnemies() {
         // Player collided with the enemy with the possibility of defeating them
         if (PLAYER.isUsingAttackImage()) {
           ENEMIES[i].startHurt();
-          registerScore(enemyScoreIncrement);
+          registerScore(ENEMY_SCORE_INCREMENT);
         } else if (!ENEMIES[i].isRecoveryFlashing) {
           registerPlayerHurt(i);
         }
@@ -389,37 +414,31 @@ void drawCollectibles() {
 
 void damagePlayer() {
   // Amplified damage in later levels means higher probablility of losing
-  int damage = 5;
-  PLAYER.startHurt(damage * LEVEL);
+  PLAYER.startHurt(BASE_HURT_DAMAGE * LEVEL);
 }
 
 void registerPlayerHurt(int enemyIndex) {
-  int enemyScoreDecrement = -50;
-  
-  registerScore(enemyScoreDecrement);
+  registerScore(ENEMY_SCORE_DECREMENT);
   ENEMIES[enemyIndex].reset();
   damagePlayer();
 }
 
 void registerScore(int points) {
-  int[] levelBoundaries = {500, 1000, 2000};
-  int maxLevelScoreBoundary = 1000;
-
   SCORE += points;
-  if (LEVEL >= levelBoundaries.length) {
+  if (LEVEL >= LEVEL_BOUNDARIES.length) {
     // Max level score is used to determine when a level up occurs after the
     // player has reached the level where all enemies and collectibles are utilised
     MAX_LEVEL_SCORE += points;
   }
   
-  if (LEVEL <= levelBoundaries.length) {
+  if (LEVEL <= LEVEL_BOUNDARIES.length) {
     // Level up based on the required score
-    if (LEVEL > 0 && SCORE >= levelBoundaries[LEVEL - 1]) {
+    if (LEVEL > 0 && SCORE >= LEVEL_BOUNDARIES[LEVEL - 1]) {
       increaseDifficulty();
       speedUpEnemies();
     }
   } else {
-    if (MAX_LEVEL_SCORE >= maxLevelScoreBoundary) {
+    if (MAX_LEVEL_SCORE >= MAX_LEVEL_SCORE_BOUNDARY) {
       // Any leftover points beyond the score boundary don't count to the next level up 
       MAX_LEVEL_SCORE = 0;
       // Manually increase the level counter, as the regular
@@ -434,21 +453,5 @@ void checkGameOverTimer() {
   // Pause for a brief period after a game over, then reset the game
   if (!PLAYER.isPlayable()) {
     TITLE_SCREEN.resetByTimer();
-  }
-}
-
-void draw() {
-  if (!TITLE_SCREEN.isStarted()) {
-    drawTitleScreen();
-  } else {
-    BACKDROP.drawBackground();
-    drawPlayer();
-    drawHealthBars();
-    drawScoreAndLevel();
-    drawJoystick();
-    drawEnemies();
-    drawCollectibles();
-    
-    checkGameOverTimer();
   }
 }

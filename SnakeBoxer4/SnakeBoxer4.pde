@@ -1,3 +1,27 @@
+float UNIT_X;
+float UNIT_Y;
+int SCORE;
+int LEVEL;
+Fighter PLAYER;
+MovingEnemy[] ENEMIES;
+MovingBackgroundElement[] BACKGROUND_ELEMENTS;
+float[] PLAYER_PUSHBACK_X;
+boolean ENEMIES_WERE_HURT = false;
+float DIFFICULTY_SPEED_MULTIPLIER;
+TitleScreen TITLE_SCREEN;
+MinigameManager MM;
+Timer TRANSITION_TIMER = new Timer(1, 30, false);
+
+// These global variables are placed here to make it easier to adjust the difficulty of the game.
+// Number of lives allowed in the game
+int PLAYER_LIVES = 4;
+// Number of minigames available
+int MINIGAME_COUNT = 10;
+// Number of points to score to increase the difficulty
+int POINTS_TO_INCREASE_DIFFICULTY = 5;
+// Speed multiplier upon increasing the difficulty
+float DIFFICULTY_SPEED_MULTIPLIER_INC = 0.25;
+
 void setup() {
   fullScreen();
   //size(600, 400);
@@ -15,6 +39,48 @@ void setup() {
   TITLE_SCREEN.setGeneralItemImage("titlescreen/SnakeBoxer4_Snake.png",
                                    width * 0.65, height * 0.75,
                                    UNIT_X * 33, UNIT_Y * 33);
+}
+
+void mousePressed() {
+  // Prevent players from making actions until the minigame has actually started
+  if (TITLE_SCREEN.isStarted()) {
+    if (!MM.isShowingInstructions()) {
+      MM.screenPressed();
+    }
+  } else {
+    TITLE_SCREEN.setStartState(true);
+    setupGame();
+  }
+}
+
+void mouseReleased() {
+  // Prevent players from making actions until the minigame has actually started
+  if (TITLE_SCREEN.isStarted() && !MM.isShowingInstructions()) {
+    MM.screenReleased();
+  }
+}
+
+void mouseDragged() {
+  // Prevent players from making actions until the minigame has actually started
+  if (TITLE_SCREEN.isStarted() && !MM.isShowingInstructions()) {
+    MM.screenDragged();
+  }
+}
+
+void keyPressed() {
+  // Prevent players from making actions until the minigame has actually started
+  if (TITLE_SCREEN.isStarted() && !MM.isShowingInstructions()) {
+    MM.keyboardPressed();
+  }
+}
+
+void draw() {
+  if (!TITLE_SCREEN.isStarted()) {
+    TITLE_SCREEN.drawTitleScreen();
+  } else {
+    drawGame();
+    checkGameOverTimer();
+  }
 }
 
 void setupGame() {
@@ -42,7 +108,7 @@ void setupPlayer() {
                          "characters/BoxerJoe/BoxerJoe_Attack2.png"
                        },
                        UNIT_X * 22, UNIT_Y * 22);
-  PLAYER.lives = 4;
+  PLAYER.lives = PLAYER_LIVES;
   PLAYER.hp = PLAYER.lives;
   PLAYER_PUSHBACK_X = new float[PLAYER.lives + 1];
   
@@ -147,21 +213,6 @@ void setupBackgroundElements() {
   }
 }
 
-float UNIT_X;
-float UNIT_Y;
-int SCORE;
-int LEVEL;
-Fighter PLAYER;
-MovingEnemy[] ENEMIES;
-MovingBackgroundElement[] BACKGROUND_ELEMENTS;
-float[] PLAYER_PUSHBACK_X;
-boolean ENEMIES_WERE_HURT = false;
-float DIFFICULTY_SPEED_MULTIPLIER;
-TitleScreen TITLE_SCREEN;
-
-MinigameManager MM;
-Timer TRANSITION_TIMER = new Timer(1, 30, false);
-
 void drawPlayerLives(float playerLivesX, float playerLivesY) {
   float playerLivesWidth = UNIT_X * 2;
   float playerLivesHeight = UNIT_Y * 2;
@@ -215,13 +266,10 @@ void drawEnemies() {
 }
 
 void increaseScore() {
-  int pointsToIncreaseDifficulty = 5;
-  float difficultySpeedMultiplierInc = 0.25;
-  
   SCORE++;
   // Increase difficulty after a certain score milestone, rather than after each minigame
-  if (SCORE % pointsToIncreaseDifficulty == 0) {
-    DIFFICULTY_SPEED_MULTIPLIER += difficultySpeedMultiplierInc;
+  if (SCORE % POINTS_TO_INCREASE_DIFFICULTY == 0) {
+    DIFFICULTY_SPEED_MULTIPLIER += DIFFICULTY_SPEED_MULTIPLIER_INC;
   }
 }
 
@@ -247,8 +295,7 @@ void drawPlayer() {
 void selectNextMinigame() {
   float localUnitX = UNIT_X;
   float localUnitY = UNIT_Y;
-  int minigameCount = 10;
-  int minigameIndex = (int)random(minigameCount); // Ensure the default case is also a valid selection
+  int minigameIndex = (int)random(MINIGAME_COUNT); // Ensure the default case is also a valid selection
   // If the font size is 32, instructions should be 18 characters or less
   switch (minigameIndex) {
     case 0:
@@ -337,39 +384,6 @@ void drawGame() {
   }
 }
 
-void mousePressed() {
-  // Prevent players from making actions until the minigame has actually started
-  if (TITLE_SCREEN.isStarted()) {
-    if (!MM.isShowingInstructions()) {
-      MM.screenPressed();
-    }
-  } else {
-    TITLE_SCREEN.setStartState(true);
-    setupGame();
-  }
-}
-
-void mouseReleased() {
-  // Prevent players from making actions until the minigame has actually started
-  if (TITLE_SCREEN.isStarted() && !MM.isShowingInstructions()) {
-    MM.screenReleased();
-  }
-}
-
-void mouseDragged() {
-  // Prevent players from making actions until the minigame has actually started
-  if (TITLE_SCREEN.isStarted() && !MM.isShowingInstructions()) {
-    MM.screenDragged();
-  }
-}
-
-void keyPressed() {
-  // Prevent players from making actions until the minigame has actually started
-  if (TITLE_SCREEN.isStarted() && !MM.isShowingInstructions()) {
-    MM.keyboardPressed();
-  }
-}
-
 void checkGameOverTimer() {
   // Pause for a brief period after a game over, then reset the game
   if (!PLAYER.isPlayable()) {
@@ -380,14 +394,5 @@ void checkGameOverTimer() {
     if (startStatus && !TITLE_SCREEN.isStarted()) {
       setupGame();
     }
-  }
-}
-
-void draw() {
-  if (!TITLE_SCREEN.isStarted()) {
-    TITLE_SCREEN.drawTitleScreen();
-  } else {
-    drawGame();
-    checkGameOverTimer();
   }
 }
