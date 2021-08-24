@@ -15,11 +15,20 @@ TitleScreen TITLE_SCREEN;
 
 // These global variables are placed here to make it easier to adjust the difficulty of the game.
 // Number of knockouts required to level up after reaching the max. level
-int MAX_LEVEL_KNOCKOUTS_BOUNDARY = 20;
+final int MAX_LEVEL_KNOCKOUTS_BOUNDARY = 20;
+// The point at which the level stops increasing and knockouts stop being counted.
+// This is mainly to prevent the level number from overflowing into the knockouts text
+// due to the number of digits required to represent it.
+final int LEVEL_CAP = 99999;
+// The speed multiplier at which that enemies cannot increase once exceeded.
+// If allowed too high, the enemies essentially disappear off the screen almost instantly.
+final float ENEMY_SPEED_UP_FACTOR_MAX = 40;
 // Speed multiplier for enemies upon levelling up
-float ENEMY_SPEED_UP_FACTOR = 1.25;
+final float ENEMY_SPEED_UP_FACTOR = 1.25;
 // Number of enemies to add upon levelling up
-int ENEMY_INC = 4;
+final int ENEMY_INC = 4;
+// Total number of enemies that can be fought
+final int ENEMIES_COUNT = 16;
 
 void setup() {
   fullScreen();
@@ -147,7 +156,7 @@ void setupGame() {
   PLAYER.isFlippedX = true;
 
   // Set the initial enemies using the difficulty increase function
-  ENEMIES = new MovingEnemy[16];
+  ENEMIES = new MovingEnemy[ENEMIES_COUNT];
   increaseDifficulty();
 }
 
@@ -263,8 +272,12 @@ void drawEnemies() {
   }
 }
 
-void registerKnockout() {  
-  KNOCKOUTS++;
+void registerKnockout() {
+  // No point in increasing the score if the level cap has been reached
+  if (LEVEL < LEVEL_CAP) {
+    KNOCKOUTS++;
+  }
+
   if (LEVEL <= LEVEL_BOUNDARIES.length) {
     // Level up based on the required number of knockouts
     if (LEVEL > 0 && KNOCKOUTS == LEVEL_BOUNDARIES[LEVEL - 1]) {
@@ -293,7 +306,7 @@ void increaseDifficulty() {
   float[] possibleY = {ENEMY_SPAWN_UPPER_Y, ENEMY_SPAWN_LOWER_Y};
   int firstEnemyIndex = LEVEL * ENEMY_INC;
   int lastEnemyIndex = firstEnemyIndex + ENEMY_INC;
-  LEVEL++;
+  LEVEL = min(LEVEL + 1, LEVEL_CAP);
   
   // Maximum level is when all enemies are utilised
   if (lastEnemyIndex >= ENEMIES.length) {
@@ -317,7 +330,7 @@ void increaseDifficulty() {
 
 void speedUpEnemies() {
   for (int i = 0; i < ENEMIES.length; i++) {
-    if (ENEMIES[i] != null) {
+    if (ENEMIES[i] != null && ENEMIES[i].speedXMultiplier <= ENEMY_SPEED_UP_FACTOR_MAX) {
       ENEMIES[i].speedXMultiplier *= ENEMY_SPEED_UP_FACTOR;
     }
   }
