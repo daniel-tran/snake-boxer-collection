@@ -13,14 +13,18 @@ MinigameManager MM;
 Timer TRANSITION_TIMER = new Timer(1, 30, false);
 
 // These global variables are placed here to make it easier to adjust the difficulty of the game.
+// The highest possible score that cannot be exceeded
+final int SCORE_MAX = Integer.MAX_VALUE;
 // Number of lives allowed in the game
-int PLAYER_LIVES = 4;
+final int PLAYER_LIVES = 4;
 // Number of minigames available
-int MINIGAME_COUNT = 10;
+final int MINIGAME_COUNT = 10;
 // Number of points to score to increase the difficulty
-int POINTS_TO_INCREASE_DIFFICULTY = 5;
+final int POINTS_TO_INCREASE_DIFFICULTY = 5;
 // Speed multiplier upon increasing the difficulty
-float DIFFICULTY_SPEED_MULTIPLIER_INC = 0.25;
+final float DIFFICULTY_SPEED_MULTIPLIER_INC = 0.25;
+// The highest speed multiplier
+final float DIFFICULTY_SPEED_MULTIPLIER_MAX = 5;
 
 void setup() {
   fullScreen();
@@ -266,10 +270,13 @@ void drawEnemies() {
 }
 
 void increaseScore() {
-  SCORE++;
+  if (SCORE < SCORE_MAX) {
+    SCORE++;
+  }
   // Increase difficulty after a certain score milestone, rather than after each minigame
   if (SCORE % POINTS_TO_INCREASE_DIFFICULTY == 0) {
-    DIFFICULTY_SPEED_MULTIPLIER += DIFFICULTY_SPEED_MULTIPLIER_INC;
+    DIFFICULTY_SPEED_MULTIPLIER = min(DIFFICULTY_SPEED_MULTIPLIER + DIFFICULTY_SPEED_MULTIPLIER_INC,
+                                      DIFFICULTY_SPEED_MULTIPLIER_MAX);
   }
 }
 
@@ -356,7 +363,7 @@ void drawGame() {
     textAlign(CENTER);
     textSize(scoreFontSize);
     fill(255);
-    text(SCORE, scoreX, scoreY);
+    text(nfc(SCORE), scoreX, scoreY);
     drawPlayerLives(width * 0.38, height * 0.1);
     // Player is drawn before the enemies so that the GAME OVER sprite is drawn
     // under the enemy sprite, which looks slightly more correct
