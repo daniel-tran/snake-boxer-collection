@@ -22,24 +22,37 @@ Background BACKDROP;
 boolean JOYSTICK_ACTIVE;
 
 // These global variables are placed here to make it easier to adjust the difficulty of the game.
+// The point at which the level stops increasing and knockouts stop being counted.
+// This is mainly to prevent the level number from overflowing into the knockouts text
+// due to the number of digits required to represent it.
+final int LEVEL_CAP = 99999;
 // Number of enemies to add upon levelling up
-int ENEMY_INC = 4;
+final int ENEMY_INC = 4;
+// Total number of enemies that can be fought
+final int ENEMIES_COUNT = 16;
 // Number of collectibles to add upon levelling up
-int COLLECTIBLE_INC = 2;
+final int COLLECTIBLE_INC = 2;
+// Total number of collectibles that can be fought
+final int COLLECTIBLES_COUNT = ENEMIES_COUNT;
 // Score increment upon defeating an enemy
-int ENEMY_SCORE_INCREMENT = 50;
+final int ENEMY_SCORE_INCREMENT = 50;
 // Score decrement upon colliding with an enemy
-int ENEMY_SCORE_DECREMENT = -ENEMY_SCORE_INCREMENT;
+final int ENEMY_SCORE_DECREMENT = -ENEMY_SCORE_INCREMENT;
 // Health loss amount upon colliding with an enemy
-int BASE_HURT_DAMAGE = 5;
+final int BASE_HURT_DAMAGE = 5;
 // Score boundaries that enable a level up
-int[] LEVEL_BOUNDARIES = {500, 1000, 2000};
+final int[] LEVEL_BOUNDARIES = {500, 1000, 2000};
 // Score boundary that enables a level up when at the max. level
-int MAX_LEVEL_SCORE_BOUNDARY = 1000;
+final int MAX_LEVEL_SCORE_BOUNDARY = 1000;
+// The speed multiplier at which that enemies cannot increase once exceeded.
+// If allowed too high, the enemies essentially disappear off the screen almost instantly.
+final float ENEMY_SPEED_UP_FACTOR_MAX = 10;
 // Speed multiplier for enemies upon levelling up
-float ENEMY_SPEED_UP_FACTOR = 1.25;
+final float ENEMY_SPEED_UP_FACTOR = 1.25;
+// The speed multiplier at which that colllectibles cannot increase once exceeded
+final float COLLECTIBLE_SPEED_UP_FACTOR_MAX = ENEMY_SPEED_UP_FACTOR_MAX;
 // Speed multiplier for collectibles upon levelling up
-float COLLECTIBLE_SPEED_UP_FACTOR = ENEMY_SPEED_UP_FACTOR;
+final float COLLECTIBLE_SPEED_UP_FACTOR = ENEMY_SPEED_UP_FACTOR;
 
 void setup() {
   fullScreen();
@@ -136,8 +149,8 @@ void setupGame() {
                        UNIT_X * 22, UNIT_Y * 22);
   // Attacking feels a bit slow for some reason
   PLAYER.attack1Timer.timeInc *= 2;
-  ENEMIES = new MovingEnemy[16];
-  COLLECTIBLES = new MovingCollectible[16];
+  ENEMIES = new MovingEnemy[ENEMIES_COUNT];
+  COLLECTIBLES = new MovingCollectible[COLLECTIBLES_COUNT];
   // Set the initial enemies using the difficulty increase function
   increaseDifficulty();
   // Randomise the background, but don't use the special backdrops
@@ -164,7 +177,7 @@ void increaseDifficulty() {
   int lastEnemyIndex = firstEnemyIndex + ENEMY_INC;
   int firstCollectibleIndex = LEVEL * COLLECTIBLE_INC;
   int lastCollectibleIndex = firstCollectibleIndex + COLLECTIBLE_INC;
-  LEVEL++;
+  incrementLevel();
   
   // Maximum level is when all enemies are utilised
   if (lastEnemyIndex < ENEMIES.length) {
@@ -206,12 +219,12 @@ void increaseDifficulty() {
 
 void speedUpEnemies() {
   for (int i = 0; i < ENEMIES.length; i++) {
-    if (ENEMIES[i] != null) {
+    if (ENEMIES[i] != null && ENEMIES[i].speedXMultiplier <= ENEMY_SPEED_UP_FACTOR_MAX) {
       ENEMIES[i].speedXMultiplier *= ENEMY_SPEED_UP_FACTOR;
     }
   }
   for (int i = 0; i < COLLECTIBLES.length; i++) {
-    if (COLLECTIBLES[i] != null) {
+    if (COLLECTIBLES[i] != null && COLLECTIBLES[i].speedXMultiplier <= COLLECTIBLE_SPEED_UP_FACTOR_MAX) {
       COLLECTIBLES[i].speedXMultiplier *= COLLECTIBLE_SPEED_UP_FACTOR;
     }
   }
@@ -424,7 +437,11 @@ void registerPlayerHurt(int enemyIndex) {
 }
 
 void registerScore(int points) {
-  SCORE += points;
+  // No point in increasing the score if the level cap has been reached
+  if (LEVEL < LEVEL_CAP) {
+    SCORE += points;
+  }
+
   if (LEVEL >= LEVEL_BOUNDARIES.length) {
     // Max level score is used to determine when a level up occurs after the
     // player has reached the level where all enemies and collectibles are utilised
@@ -443,7 +460,7 @@ void registerScore(int points) {
       MAX_LEVEL_SCORE = 0;
       // Manually increase the level counter, as the regular
       // level up function is not being called
-      LEVEL++;
+      incrementLevel();
       speedUpEnemies();
     }
   }
@@ -454,4 +471,8 @@ void checkGameOverTimer() {
   if (!PLAYER.isPlayable()) {
     TITLE_SCREEN.resetByTimer();
   }
+}
+
+void incrementLevel() {
+  LEVEL = min(LEVEL + 1, LEVEL_CAP);
 }
