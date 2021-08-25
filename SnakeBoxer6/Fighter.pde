@@ -285,6 +285,7 @@ class Fighter {
   
   void startAttack() {
     if (!attack1Timer.isOvertime()) {
+      attack1Timer.reset();
       setRegularAttackImage();
     }
   }
