@@ -13,10 +13,11 @@ class Fighter {
   int imgAttackMarker = 0; // Index for which normal attack image to use 
   PImage imgDrawn;
   boolean useAltAttack = false;
-  Timer attack1Timer = new Timer(1, 20, false);
+  Timer attack1Timer = new Timer(1, 10, false);
   int attack1Damage = 5;
   float attack1Multiplier = 1;
   boolean useSpecialAttack = false;
+  Timer attackSpecialTimer = new Timer(1, 20, false);
   int attackSpecialDamage = 5;
   float attackSpecialMultiplier = 1;
   PImage imgAttackCharged;
@@ -259,6 +260,7 @@ class Fighter {
   
   void resetToIdle() {
     attack1Timer.reset();
+    attackSpecialTimer.reset();
     hurtTimer.reset();
     imgDrawn = imgIdle;
     attackChargeTimer.reset();
@@ -284,8 +286,9 @@ class Fighter {
   }
   
   void startAttack() {
-    if (!attack1Timer.isOvertime()) {
+    if (!attack1Timer.isOvertime() && !attackSpecialTimer.isOvertime()) {
       attack1Timer.reset();
+      attackSpecialTimer.reset();
       setRegularAttackImage();
     }
   }
@@ -297,9 +300,11 @@ class Fighter {
     // User is doing an attack, and midway through completing it.
     if (isUsingAttackImage()) {
       attack1Timer.tick();
+      attackSpecialTimer.tick();
       
       // User has finished doing an attack.
-      if (attack1Timer.isOvertime()) {
+      if ((attack1Timer.isOvertime() && !attackChargeTimer.isOvertime()) ||
+          (attackSpecialTimer.isOvertime() && attackChargeTimer.isOvertime())) {
         resetToIdle();
       }
     } else if (isUsingHurtImage()) {
@@ -484,7 +489,7 @@ class Fighter {
   
   void startSpecialAttack() {
     // Reuse the regular attack timer for the duration of the special attack
-    if (!attack1Timer.isOvertime()) {
+    if (!attackSpecialTimer.isOvertime()) {
       imgDrawn = imgAttackSpecial;
     }
   }

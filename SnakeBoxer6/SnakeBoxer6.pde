@@ -247,7 +247,7 @@ void drawPlayer() {
       if (PLAYER.isChargedForSpecialAttack()) {
         // User is doing a special attack 
         PLAYER.startSpecialAttack();
-      } else {
+      } else if (!PLAYER.isUsingAttackImage()) {
         // User is doing nothing
         PLAYER.resetToIdle();
       }

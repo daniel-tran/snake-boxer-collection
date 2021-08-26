@@ -147,8 +147,6 @@ void setupGame() {
                          "characters/BoxerJoe/BoxerJoe_Attack2.png"
                        },
                        UNIT_X * 22, UNIT_Y * 22);
-  // Attacking feels a bit slow for some reason
-  PLAYER.attack1Timer.timeInc *= 2;
   ENEMIES = new MovingEnemy[ENEMIES_COUNT];
   COLLECTIBLES = new MovingCollectible[COLLECTIBLES_COUNT];
   // Set the initial enemies using the difficulty increase function

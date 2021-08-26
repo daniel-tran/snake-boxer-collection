@@ -127,7 +127,7 @@ class MinigameSaladDaze extends MinigameManager {
       // Player has pressed an invalid item while the game hasn't been won
       centreImageDrawn = centreImageLose;
       enableLoseTimer = true;
-    } else if (!itemIndexesCorrectlySelected.hasValue(selectedItemIndex) && !enableLoseTimer) {
+    } else if (!itemIndexesCorrectlySelected.hasValue(selectedItemIndex) && !enableLoseTimer && !hasWon) {
       // Player has pressed a valid item while the game isn't in a lose state
       itemIndexesCorrectlySelected.append(selectedItemIndex);
       // Visual indicator that the item has been correctly selected

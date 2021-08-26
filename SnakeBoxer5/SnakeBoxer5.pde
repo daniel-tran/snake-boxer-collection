@@ -182,7 +182,7 @@ void drawPlayer(float playerMinY, float playerMaxY) {
         // within the block zone.
         PLAYER.startBlock();
       }
-    } else if (!PLAYER.isUsingHurtImage()) {
+    } else if (!PLAYER.isUsingHurtImage() && !PLAYER.isUsingAttackImage()) {
       // User is doing nothing
       PLAYER.resetToIdle();
     }
