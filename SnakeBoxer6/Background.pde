@@ -9,10 +9,10 @@ class Background {
   float horizonHeight;
   float horizonWidthInc;
   float skyStripesHeight;
-  int[][] skyStripes;
+  color[] skyStripes;
   float[] heightFactors;
-  IntDict heightFactorsColour;
-  IntDict mainColour;
+  color heightFactorsColour;
+  color mainColour;
   float[] heightFactorsHills = {1, 0.96, 0.96, 0.92, 0.88, 0.84, 0.84, 0.8,
             0.8, 0.8, 0.8, 0.8, 0.8, 0.84, 0.88, 0.88, 0.92, 0.92,
             0.92, 0.96, 0.96, 1, 1, 1, 1, 1, 1, 0.96, 0.96, 0.92,
@@ -57,45 +57,43 @@ class Background {
                            0.55, 0.55,
                            0.8, 0.85, 0.85
                          };
-  int[][] skyStripesHills = {
-    {255, 255, 255},
-    {204, 238, 255},
-    {166, 226, 255},
-    {102, 204, 255},
-    {66, 193, 255},
-    {0, 159, 236}
+  color[] skyStripesHills = {
+    color(255, 255, 255),
+    color(204, 238, 255),
+    color(166, 226, 255),
+    color(102, 204, 255),
+    color(66, 193, 255),
+    color(0, 159, 236)
   };
-  int[][] skyStripesHillsNoon = {
-    {255, 255, 0},
-    {255, 204, 0},
-    {255, 153, 0},
-    {255, 102, 0},
-    {255, 51, 0},
-    {174, 0, 0}
+  color[] skyStripesHillsNoon = {
+    color(255, 255, 0),
+    color(255, 204, 0),
+    color(255, 153, 0),
+    color(255, 102, 0),
+    color(255, 51, 0),
+    color(174, 0, 0)
   };
-  int[][] skyStripesBeach = {
-    {40, 40, 206},
-    {153, 255, 255}
+  color[] skyStripesBeach = {
+    color(40, 40, 206),
+    color(153, 255, 255)
   };
-  int[][] skyStripesDesert = {
-    {255, 102, 0},
-    {255, 153, 0},
-    {255, 204, 0},
-    {255, 255, 0},
-    {255, 255, 0}
+  color[] skyStripesDesert = {
+    color(255, 102, 0),
+    color(255, 153, 0),
+    color(255, 204, 0),
+    color(255, 255, 0),
+    color(255, 255, 0)
   };
-  int[][] skyStripesSiberia = {
-    {86, 139, 246}
+  color[] skyStripesSiberia = {
+    color(86, 139, 246)
   };
-  int[][] skyStripesCity = {
-    {153, 255, 255}
+  color[] skyStripesCity = {
+    color(153, 255, 255)
   };
   
   Background(int backgroundIndex, float horizonHeightValue, float horizonWidthIncValue) {
     horizonHeight = horizonHeightValue;
     horizonWidthInc = horizonWidthIncValue;
-    mainColour = new IntDict();
-    heightFactorsColour = new IntDict();
     // Supplying a negative number is shorthand for randomising the background
     if (backgroundIndex < 0) {
       randomiseBackground();
@@ -172,19 +170,15 @@ class Background {
     }
   }
   
-  void setMainColour(int R, int G, int B, boolean useSameColourForHeightFactors) {
-    mainColour.set("R", R);
-    mainColour.set("G", G);
-    mainColour.set("B", B);
+  void setMainColour(int r, int g, int b, boolean useSameColourForHeightFactors) {
+    mainColour = color(r, g, b);
     if (useSameColourForHeightFactors) {
-      setHeightFactorsColour(R, G, B);
+      setHeightFactorsColour(r, g, b);
     }
   }
   
-  void setHeightFactorsColour(int R, int G, int B) {
-    heightFactorsColour.set("R", R);
-    heightFactorsColour.set("G", G);
-    heightFactorsColour.set("B", B);
+  void setHeightFactorsColour(int r, int g, int b) {
+    heightFactorsColour = color(r, g, b);
   }
   
   void drawBackground() {
@@ -198,12 +192,12 @@ class Background {
   void drawBackgroundRegular() {
     rectMode(CORNERS);
     // Draw the main background
-    background(mainColour.get("R"), mainColour.get("G"), mainColour.get("B"));
+    background(mainColour);
     if (skyStripes.length > 0) {
       // Draw the sky as a series of horizontal stripes
       float horizonHeightInc = horizonHeight / skyStripes.length;
       for (int i = 0; i < skyStripes.length; i++) {
-        fill(skyStripes[i][0], skyStripes[i][1], skyStripes[i][2]);
+        fill(skyStripes[i]);
         // Draw each sky stripe below the last drawn one
         rect(0, 0, width, horizonHeight - (horizonHeightInc * i));
       }
@@ -214,8 +208,8 @@ class Background {
     // Width of each pixel column when drawing the background element
     float widthX = horizonWidthInc * 2;
     
-    stroke(heightFactorsColour.get("R"), heightFactorsColour.get("G"), heightFactorsColour.get("B"));
-    fill(heightFactorsColour.get("R"), heightFactorsColour.get("G"), heightFactorsColour.get("B"));
+    stroke(heightFactorsColour);
+    fill(heightFactorsColour);
     // Background willl repeat, by increasing the value of the x coordinate
     // and persisting its modification after the first cycle.
     for (int c = 0; c < backgroundIterations; c++) {
