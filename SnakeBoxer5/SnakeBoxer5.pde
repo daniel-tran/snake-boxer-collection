@@ -127,10 +127,10 @@ void drawHealthBars() {
   if (ENEMY.lives >= ENEMY.livesMax || !ENEMY.randomiseTintOnLifeRecovery) {
     // The first level always uses the same colour for the healthbar
     fill(181, 230, 29);
-  } else if (ENEMY.imgTint.size() > 0) {
+  } else if (ENEMY.imgTint != 255) {
     // If the base sprite isn't using white as the predominant colour,
     // the health bar colour will sometimes mismatch with the sprite
-    fill(ENEMY.imgTint.get("R"), ENEMY.imgTint.get("G"), ENEMY.imgTint.get("B"));
+    fill(ENEMY.imgTint);
   }
   rect(healthBarSectionX + (UNIT_X * 10), healthBarSectionY + UNIT_Y, (ENEMY.hp / ENEMY.hpMax) * (width * 0.75), UNIT_Y * 2);
   // Player HP, drawn as a percentage of remaining health multiplied by a static width

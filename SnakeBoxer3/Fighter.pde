@@ -38,7 +38,7 @@ class Fighter {
   float speedYMultiplier = 1;
   float damageMultiplier = 1;
   boolean isStalled = false;
-  IntDict imgTint;
+  color imgTint;
   boolean randomiseTintOnLifeRecovery = false;
   // Default direction is right, so true = facing left
   boolean isFlippedX = false;
@@ -58,10 +58,7 @@ class Fighter {
     imgHeight = spriteHeight;
     setHitBoundaryDefault();
     // Default image tint is to use no tinting
-    imgTint = new IntDict();
-    imgTint.set("R", 255);
-    imgTint.set("G", 255);
-    imgTint.set("B", 255);
+    imgTint = color(255, 255, 255);
   }
   
   Fighter(float initialX, float initialY, float spriteWidth, float spriteHeight, String presetName) {
@@ -452,9 +449,7 @@ class Fighter {
   }
   
   void randomiseImageTint() {
-    imgTint.set("R", (int)random(0, 256));
-    imgTint.set("G", (int)random(0, 256));
-    imgTint.set("B", (int)random(0, 256));
+    imgTint = color((int)random(0, 256), (int)random(0, 256), (int)random(0, 256));
   }
   
   void drawImage() {
@@ -469,7 +464,7 @@ class Fighter {
     }
     
     imageMode(CENTER);
-    tint(imgTint.get("R"), imgTint.get("G"), imgTint.get("B"));
+    tint(imgTint);
     image(imgDrawn, x, y, imgWidth, imgHeight);
     
     // Restore normal player coordinates
