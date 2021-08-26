@@ -7,7 +7,7 @@ class MovingBackgroundElement {
   float[] positionOptionsY;
   float resetX;
   float speedXMultiplier = 1;
-  IntDict fillColour;
+  color fillColour;
   
   MovingBackgroundElement(float initialX, float initialY,
                           float[] posssibleX, float[] posssibleY,
@@ -21,16 +21,11 @@ class MovingBackgroundElement {
     elementHeight = initialHeight;
     resetX = resetBoundaryX;
     // Default colour is white
-    fillColour = new IntDict();
-    fillColour.set("R", 255);
-    fillColour.set("G", 255);
-    fillColour.set("B", 255);
+    setFillColour(255, 255, 255);
   }
   
   void setFillColour(int r, int g, int b) {
-    fillColour.set("R", r);
-    fillColour.set("G", g);
-    fillColour.set("B", b);
+    fillColour = color(r, g, b);
   }
   
   void reset() {
@@ -49,7 +44,7 @@ class MovingBackgroundElement {
   }
   
   void drawElement() {
-    fill(fillColour.get("R"), fillColour.get("G"), fillColour.get("B"));
+    fill(fillColour);
     rectMode(CENTER);
     rect(x, y, elementWidth, elementHeight);
   }
