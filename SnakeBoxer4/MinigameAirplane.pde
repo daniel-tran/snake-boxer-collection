@@ -80,9 +80,9 @@ class MinigameAirplane extends MinigameManager {
     }
     
     // Draw the  hills that overlay the horizon
-    int[] hillRGB = {131, 48, 8};
-    fill(hillRGB[0], hillRGB[1], hillRGB[2]);
-    stroke(hillRGB[0], hillRGB[1], hillRGB[2]);
+    color hillRGB = color(131, 48, 8);
+    fill(hillRGB);
+    stroke(hillRGB);
     float[] hillHeights = {0.95, 0.95, 0.95, 0.95, 0.85, 0.85, 0.85, 0.85, 0.75, 0.75, 0.75, 0.75,
                            0.65, 0.65, 0.65, 0.65, 0.55, 0.55, 0.55, 0.55, 0.65, 0.65, 0.65, 0.65,
                            0.75, 0.75, 0.75, 0.75, 0.85, 0.85, 0.85, 0.85, 0.95, 0.95, 0.95, 0.95,
