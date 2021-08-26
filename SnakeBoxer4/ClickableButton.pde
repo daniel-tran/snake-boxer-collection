@@ -6,16 +6,8 @@ class ClickableButton {
   
   String buttonText = "";
   float buttonTextSize = 1;
-  IntDict buttonTextColour = new IntDict(new Object[][] {
-    { "R", 0 },
-    { "G", 0 },
-    { "B", 0 }
-  });
-  IntDict buttonColour = new IntDict(new Object[][] {
-    { "R", 255 },
-    { "G", 255 },
-    { "B", 255 }
-  });
+  color buttonTextColour = color(0, 0, 0);
+  color buttonColour = color(255, 255, 255);
   PImage buttonImage;
   boolean isUsingImage;
   
@@ -33,17 +25,17 @@ class ClickableButton {
       image(buttonImage, x, y, buttonWidth, buttonHeight);
     } else {
       // Stroke uses the same colour as the text for visual aesthetics
-      stroke(buttonTextColour.get("R"), buttonTextColour.get("G"), buttonTextColour.get("B"));
+      stroke(buttonTextColour);
       strokeWeight(6);
       // Draw the actual button
-      fill(buttonColour.get("R"), buttonColour.get("G"), buttonColour.get("B"));
+      fill(buttonColour);
       rectMode(CENTER);
       rect(x, y, buttonWidth, buttonHeight);
       noStroke();
     }
     
     // Draw text
-    fill(buttonTextColour.get("R"), buttonTextColour.get("G"), buttonTextColour.get("B"));
+    fill(buttonTextColour);
     textAlign(CENTER, CENTER);
     textSize(buttonTextSize);
     text(buttonText, x, y);
@@ -66,16 +58,16 @@ class ClickableButton {
     buttonTextSize = textSize;
   }
   
-  void setButtonTextColour(int r, int g, int b) {
-    buttonTextColour.set("R", r);
-    buttonTextColour.set("G", g);
-    buttonTextColour.set("B", b);
+  void setButtonTextColour(color colour) {
+    buttonTextColour = colour;
+  }
+  
+  void setButtonColour(color colour) {
+    buttonColour = colour;
   }
   
   void setButtonColour(int r, int g, int b) {
-    buttonColour.set("R", r);
-    buttonColour.set("G", g);
-    buttonColour.set("B", b);
+    buttonColour = color(r, g, b);
   }
   
   void setButtonImage(String pathname) {

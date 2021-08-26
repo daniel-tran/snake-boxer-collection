@@ -3,11 +3,7 @@ class DialogBox {
   float y;
   float dialogBoxWidth;
   float dialogBoxHeight;
-  IntDict dialogBoxColour = new IntDict(new Object[][] {
-    { "R", 225 },
-    { "G", 225 },
-    { "B", 225 }
-  });
+  color dialogBoxColour = color(255, 255, 255);
   String dialogBoxText = "System report:\nEverything is fine. Nothing\n is ruined.";
   String headerText = "This is real.";
   ClickableButton okButton;
@@ -28,15 +24,15 @@ class DialogBox {
     float buttonY = y + (initialHeight * 0.35);
     float buttonXChoiceOffset = initialWidth * 0.25;
     okButton = new ClickableButton(x, buttonY, buttonWidth, buttonHeight);
-    okButton.setButtonColour(dialogBoxColour.get("R"), dialogBoxColour.get("G"), dialogBoxColour.get("B"));
+    okButton.setButtonColour(dialogBoxColour);
     okButton.setButtonText("OK");
     
     yesButton = new ClickableButton(x - buttonXChoiceOffset, buttonY, buttonWidth, buttonHeight);
-    yesButton.setButtonColour(dialogBoxColour.get("R"), dialogBoxColour.get("G"), dialogBoxColour.get("B"));
+    yesButton.setButtonColour(dialogBoxColour);
     yesButton.setButtonText("YES");
     
     noButton = new ClickableButton(x + buttonXChoiceOffset, buttonY, buttonWidth, buttonHeight);
-    noButton.setButtonColour(dialogBoxColour.get("R"), dialogBoxColour.get("G"), dialogBoxColour.get("B"));
+    noButton.setButtonColour(dialogBoxColour);
     noButton.setButtonText("NO");
   }
   
@@ -57,9 +53,7 @@ class DialogBox {
   }
   
   void setDialogBoxColour(int r, int g, int b) {
-    dialogBoxColour.set("R", r);
-    dialogBoxColour.set("G", g);
-    dialogBoxColour.set("B", b);
+    dialogBoxColour = color(r, g, b);
   }
   
   void registerButtonPress(float pressX, float pressY) {
@@ -97,7 +91,7 @@ class DialogBox {
     
     // Draw main dialog box
     stroke(0);
-    fill(dialogBoxColour.get("R"), dialogBoxColour.get("G"), dialogBoxColour.get("B"));
+    fill(dialogBoxColour);
     rectMode(CENTER);
     rect(x, y, dialogBoxWidth, dialogBoxHeight);
     noStroke();
