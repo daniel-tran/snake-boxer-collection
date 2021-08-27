@@ -94,8 +94,8 @@ class Fighter {
       });
       setChargeAttack("characters/CobraJoe/CobraJoe_Charged.png",
                       "characters/CobraJoe/CobraJoe_Attack2.png");
-      // Ability: Powerful charged attack but requires considerable time to prepare 
-      attackChargeTimer.timeMax *= 2;
+      // Ability: Powerful charged attack but requires more time to prepare 
+      attackChargeTimer.timeMax *= 1.5;
       attackSpecialMultiplier *= 5;
     } else if (hasPresetName("CRAB")) {
       setImageIdle("characters/Crab/Crab_Idle.png");

@@ -232,7 +232,7 @@ class WorldMap {
     } else if (playerFighterName == "STRONG BAD") {
       filename = finalImageFilenames[6];
     } else if (playerFighterName == "STRONG MAD") {
-      filename = finalImageFilenames[6];
+      filename = finalImageFilenames[7];
     }
     finalImage = loadImage(filename);
   }

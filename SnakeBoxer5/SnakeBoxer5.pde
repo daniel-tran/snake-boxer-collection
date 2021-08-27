@@ -111,6 +111,9 @@ void setupPlayers() {
                        PLAYER.imgWidth, PLAYER.imgHeight);
   ENEMY.setLives(Integer.MAX_VALUE);
   ENEMY.randomiseTintOnLifeRecovery = true;
+  // Behaviours are randomised upon respawn
+  setEnemyBehaviour();
+  ENEMY.useRandomBehaviour = false;
 }
 
 void drawHealthBars() {
@@ -237,6 +240,7 @@ void registerDamage() {
     PLAYER.startHurt(ENEMY.getAttackDamage());
     if (PLAYER.hp <= 0) {
       ENEMY.isStalled = true;
+      setEnemyBehaviour();
       // Need to process the hit to prevent survival on exactly 0 HP
       PLAYER.processAction();
     }
@@ -259,4 +263,8 @@ void checkGameOverTimer() {
   if (PLAYER.isUsingGameOverImage() || ENEMY.isUsingGameOverImage()) {
     TITLE_SCREEN.resetByTimer();
   }
+}
+
+void setEnemyBehaviour() {
+  ENEMY.setBehaviour(1 + (int)random(2));
 }

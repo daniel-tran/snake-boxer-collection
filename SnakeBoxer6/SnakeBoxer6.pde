@@ -67,7 +67,6 @@ void mousePressed() {
           WORLD.hasFightStarted = false;
           
           PLAYER.y = ENEMY.y;
-          PLAYER.hp = PLAYER.hpMax;
           PLAYER.isStalled = true;
           ENEMY.isStalled = true;
           READY_TIMER.reset();
