@@ -12,8 +12,8 @@ class MinigameRabbitAlgebra extends MinigameManager {
   int onesValue = 0;
   float onesX = width * 0.5;
   float onesY = height * 0.75;
-  float onesButtonWidth = buttonWidth * 2;
-  float onesButtonHeight = buttonWidth * 2;
+  float onesButtonWidth = buttonWidth * 2.5;
+  float onesButtonHeight = buttonWidth * 2.5;
   int tensValue = 0;
   float tensX = onesX - (localUnitX * 9);
   float tensY = onesY;
