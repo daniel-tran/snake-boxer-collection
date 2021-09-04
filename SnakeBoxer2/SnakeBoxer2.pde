@@ -234,8 +234,8 @@ void registerPlayerAttack() {
       PLAYER.startAttack();
     }
     
-    if (!PLAYER.isPlayable()) {
-      // User can quickly start a new game instead of waiting for the timer to finish  
+    if (!PLAYER.isPlayable() && PLAYER.isUsingGameOverImage()) {
+      // User can quickly start a new game instead of waiting for the full timer to finish
       TITLE_SCREEN.forceReset();
     }
   } else {
