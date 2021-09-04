@@ -114,7 +114,15 @@ void touchStarted() {
   // behaviour where the player cannot move without first making an attack.
   // As a side effect, this technically makes the game somewhat playable with
   // one (left) hand.
-  registerPlayerAttack();
+  //
+  // Also note that both the mousePressed() and touchStarted() functions are called
+  // (in that order) when the screen is pressed on mobile devices.
+  // Thus, the condition below is necessary to allow the player to reset the game
+  // upon losing and still be redirected to the title screen, otherwise a new game
+  // is immediately started due to the "second" screen press.
+  if (TITLE_SCREEN.isStarted()) {
+    registerPlayerAttack();
+  }
 }
 
 void draw() {
