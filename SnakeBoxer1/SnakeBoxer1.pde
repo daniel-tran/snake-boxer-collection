@@ -79,8 +79,8 @@ void mousePressed() {
       PLAYER.startAttack();
     }
     
-    if (!DELI_SHOP.isActive()) {
-      // User can quickly start a new game instead of waiting for the timer to finish
+    if (!DELI_SHOP.isActive() && DELI_SHOP.isUsingDestroyedImage()) {
+      // User can quickly start a new game instead of waiting for the full timer to finish
       TITLE_SCREEN.forceReset();
     }
   } else {

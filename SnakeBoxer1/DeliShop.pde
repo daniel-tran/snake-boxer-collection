@@ -58,4 +58,8 @@ class DeliShop {
     // It turns out the game is difficult enough as is with static damage
     hp -= 10;
   }
+  
+  boolean isUsingDestroyedImage() {
+    return imgDrawn == imgDestroyed;
+  }
 }
