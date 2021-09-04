@@ -266,5 +266,7 @@ void checkGameOverTimer() {
 }
 
 void setEnemyBehaviour() {
-  ENEMY.setBehaviour(1 + (int)random(2));
+  // In the original "Snake Boxer 5", the snakes appear to use the same
+  // behaviour regardless of level.
+  ENEMY.setBehaviour(2);
 }
