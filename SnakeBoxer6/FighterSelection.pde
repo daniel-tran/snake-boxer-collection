@@ -5,7 +5,6 @@ class FighterSelection {
   int fighterMugshotCount = 8;
   ClickableButton[] fighterMugshots = new ClickableButton[fighterMugshotCount];
   PImage imgFighterSelected;
-  PImage imgFighterSelectedEmpty;
   String blurbSelected;
   float[] imgFighterSelectedPosition = new float[2];
   PImage[] imgFighterSelectedShowcase = new PImage[fighterMugshotCount];
@@ -83,8 +82,7 @@ class FighterSelection {
       fighterMugshots[i] = new ClickableButton(mugshotX, mugshotY, incrementX, incrementY);
       fighterMugshots[i].setButtonImage(fighterMugshotsFilenames[i]);
     }
-    
-    imgFighterSelectedEmpty = loadImage("Empty.png");
+
     imgFighterSelectedPosition[0] = width * 0.2;
     imgFighterSelectedPosition[1] = height * 0.75;
     

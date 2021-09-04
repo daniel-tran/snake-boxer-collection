@@ -8,7 +8,6 @@ class MovingEnemy {
   PImage imgHurt;
   PImage[] imgMoving;
   boolean isRecoveryFlashing = false;
-  PImage imgRecoveryFlash = loadImage("Empty.png");
   float imgWidth;
   float imgHeight;
   PImage imgDrawn;
@@ -19,6 +18,7 @@ class MovingEnemy {
   int recoveryFlashCountMax = 10;
   float speedXMultiplier = 1;
   boolean isFlipped = false; // True if the enemy is moving from right to left
+  boolean isDrawable = true;
   
   MovingEnemy(float initialX, float initialY, String filenameHurt,
               String[] filenamesIdle, float spriteWidth, float spriteHeight,
@@ -43,6 +43,10 @@ class MovingEnemy {
   }
   
   void drawImage() {
+    if (!isDrawable) {
+      return;
+    }
+    
     float tempX = x;
     
     if (!isRecoveryFlashing) {
@@ -96,11 +100,7 @@ class MovingEnemy {
           
           // Sprite flashing is done by switching between the idle and empty
           // images, leveraging much of the existing draw logic.
-          if (recoveryFlashCount % 2 == 0) {
-            imgDrawn = imgHurt;
-          } else {
-            imgDrawn = imgRecoveryFlash;
-          }
+          isDrawable = (recoveryFlashCount % 2 == 0);
         }
       } else {
         reset();
@@ -120,6 +120,7 @@ class MovingEnemy {
     y = positionOptionsY[randomY];
     imgDrawn = imgMoving[0];
     setFlipStatus();
+    isDrawable = true;
   }
   
   void setFlipStatus() {

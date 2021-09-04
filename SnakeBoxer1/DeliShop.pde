@@ -11,7 +11,7 @@ class DeliShop {
   Timer recoveryFlashTimer = new Timer(1, 2, true);
   int recoveryFlashCount = 0;
   int recoveryFlashCountMax = 10;
-  PImage imgDestroyedFlash = loadImage("Empty.png");
+  boolean isDrawable = true;
   
   DeliShop(float initialX, float initialY, float spriteWidth, float spriteHeight,
            String filenameIdle, String filenameDestroyed) {
@@ -33,7 +33,10 @@ class DeliShop {
     if (hp <= 0) {
       drawDestroyedImage();
     }
-    image(imgDrawn, x, y, imgWidth, imgHeight);
+
+    if (isDrawable) {
+      image(imgDrawn, x, y, imgWidth, imgHeight);
+    }
   }
   
   void drawDestroyedImage() {
@@ -44,11 +47,7 @@ class DeliShop {
   
         // Sprite flashing is done by switching between the idle and empty
         // images, leveraging much of the existing draw logic.
-        if (recoveryFlashCount % 2 == 0) {
-          imgDrawn = imgIdle;
-        } else {
-          imgDrawn = imgDestroyedFlash;
-        }
+        isDrawable = (recoveryFlashCount % 2 == 0);
       }
     } else {
       imgDrawn = imgDestroyed;

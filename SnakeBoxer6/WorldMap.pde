@@ -216,7 +216,8 @@ class WorldMap {
   }
   
   void setFinalImage(String playerFighterName) {
-    String filename = "Empty.png";
+    // Default to a common image as a placeholder when adding new fighters
+    String filename = "GameOver.png";
     if (playerFighterName == "BOXER JOE") {
       filename = finalImageFilenames[0];
     } else if (playerFighterName == "COBRA JOE") {

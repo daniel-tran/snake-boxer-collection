@@ -288,8 +288,7 @@ void drawPlayer() {
     PLAYER.x -= UNIT_X;
   }
 
-  imageMode(CENTER);
-  image(PLAYER.imgDrawn, PLAYER.x, PLAYER.y, PLAYER.imgWidth, PLAYER.imgHeight);
+  PLAYER.drawImage();
   boolean isPlayerHurt = PLAYER.hurtTimer.isActive();
   PLAYER.processAction();
 

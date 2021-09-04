@@ -25,7 +25,6 @@ class Fighter {
   Timer attackChargeTimer = new Timer(1, 60, false);
   Timer hurtTimer = new Timer(5, 100, false);
   boolean isRecoveryFlashing = false;
-  PImage imgRecoveryFlash = loadImage("Empty.png");
   PImage imgGameOver = loadImage("GameOver.png");
   float imgWidth;
   float imgHeight;
@@ -42,6 +41,7 @@ class Fighter {
   boolean randomiseTintOnLifeRecovery = false;
   // Default direction is right, so true = facing left
   boolean isFlippedX = false;
+  boolean isDrawable = true;
   
   Fighter(float initialX, float initialY, String filenameIdle, String filenameBlock,
           String filenameHurt, String[] filenamesAttackNormal, float spriteWidth,
@@ -62,14 +62,13 @@ class Fighter {
   }
   
   Fighter(float initialX, float initialY, float spriteWidth, float spriteHeight, String presetName) {
-    // Use an empty image as placeholder sprites
+    // Use a commonly accessible image as placeholder sprites
     this(initialX, initialY,
-         "Empty.png",
-         "Empty.png",
-         "Empty.png",
+         "GameOver.png",
+         "GameOver.png",
+         "GameOver.png",
          new String[]{
-           "Empty.png",
-           "Empty.png"
+           "GameOver.png"
          },
          spriteWidth, spriteHeight);
          
@@ -94,8 +93,8 @@ class Fighter {
       });
       setChargeAttack("characters/CobraJoe/CobraJoe_Charged.png",
                       "characters/CobraJoe/CobraJoe_Attack2.png");
-      // Ability: Powerful charged attack but requires considerable time to prepare 
-      attackChargeTimer.timeMax *= 2;
+      // Ability: Powerful charged attack but requires more time to prepare
+      attackChargeTimer.timeMax *= 1.5;
       attackSpecialMultiplier *= 5;
     } else if (hasPresetName("CRAB")) {
       setImageIdle("characters/Crab/Crab_Idle.png");
@@ -261,6 +260,7 @@ class Fighter {
     hurtTimer.reset();
     imgDrawn = imgIdle;
     attackChargeTimer.reset();
+    isDrawable = true;
   }
   
   void keepWithinBoundary(float playerMinX, float playerMaxX,
@@ -350,11 +350,7 @@ class Fighter {
           
           // Sprite flashing is done by switching between the idle and empty
           // images, leveraging much of the existing draw logic.
-          if (recoveryFlashCount % 2 == 0) {
-            imgDrawn = imgIdle;
-          } else {
-            imgDrawn = imgRecoveryFlash;
-          }
+          isDrawable = (recoveryFlashCount % 2 == 0);
         }
       } else {
         
@@ -453,6 +449,10 @@ class Fighter {
   }
   
   void drawImage() {
+    if (!isDrawable) {
+      return;
+    }
+    
     float tempX = x;
     
     pushMatrix();
