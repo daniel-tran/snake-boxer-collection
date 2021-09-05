@@ -32,6 +32,12 @@ class Silhouette {
   }
   
   void drawImage(boolean flipImage) {
+    // If the silhouette is selected, the player is drawn in its place,
+    // thus there is no drawing necessary.
+    if (isSelected) {
+      return;
+    }
+    
     float tempX = x;
     // Flipping an image requires rescaling but also adjustment of the x, y
     // member variables based on said rescaling.
@@ -41,13 +47,8 @@ class Silhouette {
       x *= -1;
     }
     
-    if (isSelected) {
-      // Don't bother showing the silhouette, as the player will be drawn here
-      tint(255, 0);
-    } else {
-      // Apply transparency without changing color
-      tint(255, 126);
-    }
+    // Apply transparency without changing color to indicate an available silhouette
+    tint(255, 126);
     imageMode(CENTER);
     image(imgDrawn, x, y, imgWidth, imgHeight);
     
