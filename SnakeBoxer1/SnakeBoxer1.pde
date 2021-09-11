@@ -9,6 +9,7 @@ float ENEMY_SPAWN_UPPER_Y;
 float ENEMY_SPAWN_LOWER_Y;
 int LEVEL;
 int KNOCKOUTS;
+int ACTIVE_ENEMIES_COUNT;
 int[] LEVEL_BOUNDARIES = {12, 24, 48};
 int MAX_LEVEL_KNOCKOUTS;
 TitleScreen TITLE_SCREEN;
@@ -28,7 +29,7 @@ final float ENEMY_SPEED_UP_FACTOR = 1.25;
 // Number of enemies to add upon levelling up
 final int ENEMY_INC = 4;
 // Total number of enemies that can be fought
-final int ENEMIES_COUNT = 16;
+final int TOTAL_ENEMIES_COUNT = 16;
 
 void setup() {
   fullScreen();
@@ -121,6 +122,7 @@ void setupGame() {
   LEVEL = 0;
   KNOCKOUTS = 0;
   MAX_LEVEL_KNOCKOUTS = 0;
+  ACTIVE_ENEMIES_COUNT = 0;
 
   PLAYER = new Fighter(width * 0.55, height * 0.45,
                        "characters/BoxerJoe/BoxerJoe_Idle.png",
@@ -156,8 +158,8 @@ void setupGame() {
   PLAYER.isFlippedX = true;
 
   // Set the initial enemies using the difficulty increase function
-  ENEMIES = new MovingEnemy[ENEMIES_COUNT];
-  increaseDifficulty();
+  ENEMIES = new MovingEnemy[TOTAL_ENEMIES_COUNT];
+  setupEnemies();
 }
 
 void drawHealthBar() {
@@ -216,7 +218,7 @@ void drawUserResources() {
 }
 
 void drawEnemies() {
-  for (int i = 0; i < ENEMIES.length; i++) {
+  for (int i = 0; i < ACTIVE_ENEMIES_COUNT; i++) {
     // Ignore enemies that haven't been loaded, since the level is too low
     if (ENEMIES[i] == null) {
       continue;
@@ -299,25 +301,16 @@ void registerKnockout() {
 
 }
 
-void increaseDifficulty() {
+void setupEnemies() {
   String[] idleImages = {"characters/Snake/Snake_Idle.png",
                          "characters/Snake/Snake_Idle2.png"};
-  float[] possibleX = {0, width};
   float[] possibleY = {ENEMY_SPAWN_UPPER_Y, ENEMY_SPAWN_LOWER_Y};
-  int firstEnemyIndex = LEVEL * ENEMY_INC;
-  int lastEnemyIndex = firstEnemyIndex + ENEMY_INC;
-  LEVEL = min(LEVEL + 1, LEVEL_CAP);
+  increaseDifficulty();
   
-  // Maximum level is when all enemies are utilised
-  if (lastEnemyIndex >= ENEMIES.length) {
-    return;
-  }
-  
-  for (int i = firstEnemyIndex; i < lastEnemyIndex; i++) {
+  for (int i = 0; i < ENEMIES.length; i++) {
     // Set the spawn distance between each enemy
-    float initialOffsetX = (UNIT_X * 22) * i;
-    possibleX[0] -= initialOffsetX;
-    possibleX[1] += initialOffsetX;
+    float initialOffsetX = ((UNIT_X * 44) * i) + (UNIT_X * 11);
+    float[] possibleX = {-initialOffsetX, width + initialOffsetX};
     float initialX = possibleX[(int)random(possibleX.length)];
     float initialY = possibleY[(int)random(possibleY.length)];
     ENEMIES[i] = new MovingEnemy(initialX, initialY,
@@ -328,8 +321,13 @@ void increaseDifficulty() {
   }
 }
 
+void increaseDifficulty() {
+  LEVEL = min(LEVEL + 1, LEVEL_CAP);
+  ACTIVE_ENEMIES_COUNT = min(ACTIVE_ENEMIES_COUNT + ENEMY_INC, TOTAL_ENEMIES_COUNT);
+}
+
 void speedUpEnemies() {
-  for (int i = 0; i < ENEMIES.length; i++) {
+  for (int i = 0; i < ACTIVE_ENEMIES_COUNT; i++) {
     if (ENEMIES[i] != null && ENEMIES[i].speedXMultiplier <= ENEMY_SPEED_UP_FACTOR_MAX) {
       ENEMIES[i].speedXMultiplier *= ENEMY_SPEED_UP_FACTOR;
     }
