@@ -169,6 +169,7 @@ class AIFighter extends Fighter {
         chanceBlock = random(1);
         chanceAttack = random(1);
         chanceAttackSpecial = random(1);
+        setChanceOfActionAfterHurt(random(1));
         break;
       case 1:
         // Prioritise punching and varied movement
@@ -177,6 +178,7 @@ class AIFighter extends Fighter {
         chanceBlock = 0.1;
         chanceAttack = 1;
         chanceAttackSpecial = 0.25;
+        setChanceOfActionAfterHurt(0.5);
         break;
       case 2:
         // Prioritise blocking and punching
@@ -185,6 +187,7 @@ class AIFighter extends Fighter {
         chanceBlock = 0.8;
         chanceAttack = 0.5;
         chanceAttackSpecial = 0.5;
+        setChanceOfActionAfterHurt(0.5);
         break;
       default:
         // Prioritise blocking and special attacks
@@ -193,6 +196,7 @@ class AIFighter extends Fighter {
         chanceBlock = 0.8;
         chanceAttack = 0.1;
         chanceAttackSpecial = 1;
+        setChanceOfActionAfterHurt(0.5);
     }
   }
 
