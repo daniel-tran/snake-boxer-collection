@@ -22,6 +22,10 @@ PImage[] SHOWCASE_COLLECTIBLES_POSITIVE;
 PImage[] SHOWCASE_COLLECTIBLES_NEGATIVE;
 Background BACKDROP;
 boolean JOYSTICK_ACTIVE;
+// Cap the movement step size to prevent the player from moving through
+// enemies and collectibles when the step size is large enough.
+float PLAYER_STEP_CAP_X;
+float PLAYER_STEP_CAP_Y;
 
 // These global variables are placed here to make it easier to adjust the difficulty of the game.
 // The point at which the level stops increasing and knockouts stop being counted.
@@ -76,6 +80,8 @@ void setup() {
   UNIT_Y = UNIT_X;
   PLAYER_BOUNDARY_MIN_Y = height * 0.15;
   PLAYER_BOUNDARY_MAX_Y = height * 0.7;
+  PLAYER_STEP_CAP_X = UNIT_X * 6;
+  PLAYER_STEP_CAP_Y = UNIT_Y * 6;
   ENEMY_RESET_X = -UNIT_X;
   // Instructions will be drawn separately, as they contain images
   TITLE_SCREEN = new TitleScreen("titlescreen/SnakeBoxer2_Logo.png",
@@ -311,8 +317,8 @@ void drawJoystick() {
     if (!PLAYER.isUsingHurtImage()) {
       // Scale the increment to vary the player's speed relative to the joystick
       float speedFactor = 0.25;
-      PLAYER.x += (mouseX - joystickX) * speedFactor;
-      PLAYER.y += (mouseY - joystickY) * speedFactor;
+      PLAYER.x += min(max(mouseX - joystickX, -PLAYER_STEP_CAP_X), PLAYER_STEP_CAP_X) * speedFactor;
+      PLAYER.y += min(max(mouseY - joystickY, -PLAYER_STEP_CAP_Y), PLAYER_STEP_CAP_Y) * speedFactor;
       keepPlayerInBoundaries();
     }    
   }
