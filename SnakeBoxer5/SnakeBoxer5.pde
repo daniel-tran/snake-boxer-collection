@@ -111,9 +111,11 @@ void setupPlayers() {
                        PLAYER.imgWidth, PLAYER.imgHeight);
   ENEMY.setLives(Integer.MAX_VALUE);
   ENEMY.randomiseTintOnLifeRecovery = true;
-  // Behaviours are randomised upon respawn
+  // Behaviours are not randomised upon respawn
   setEnemyBehaviour();
   ENEMY.useRandomBehaviour = false;
+  // Initial enemy settings to make the early fights easier
+  ENEMY.setChanceOfActionAfterHurt(0);
 }
 
 void drawHealthBars() {
@@ -220,22 +222,12 @@ void drawEnemy(float playerMinY, float playerMaxY) {
 }
 
 void registerDamage() {
-  if (PLAYER.isUsingAttackImage() && ENEMY.isPlayable() && 
-     ENEMY.isWithinHitBoundary(ENEMY.x, ENEMY.x,
-                               PLAYER.y - PLAYER.hitBoundaryYUp,
-                               PLAYER.y + PLAYER.hitBoundaryYDown) 
-     ) {
-    ENEMY.startHurt(PLAYER.getAttackDamage());
-    if (ENEMY.hp <= 0) {
-      PLAYER.isStalled = true;
-      // Need to process the hit to prevent survival on exactly 0 HP
-      ENEMY.processAction();
-    }
-  }
+  // Player hit registration is determined first to prevent them
+  // from overriding the enemy's attack
   if (ENEMY.isUsingAttackImage() && PLAYER.isPlayable() && 
      PLAYER.isWithinHitBoundary(PLAYER.x, PLAYER.x,
                                 ENEMY.y - ENEMY.hitBoundaryYUp,
-                                ENEMY.y + ENEMY.hitBoundaryYDown) 
+                                ENEMY.y + ENEMY.hitBoundaryYDown)
      ) {
     PLAYER.startHurt(ENEMY.getAttackDamage());
     if (PLAYER.hp <= 0) {
@@ -243,6 +235,19 @@ void registerDamage() {
       setEnemyBehaviour();
       // Need to process the hit to prevent survival on exactly 0 HP
       PLAYER.processAction();
+    }
+  }
+  if (PLAYER.isUsingAttackImage() && ENEMY.isPlayable() &&
+     ENEMY.isWithinHitBoundary(ENEMY.x, ENEMY.x,
+                               PLAYER.y - PLAYER.hitBoundaryYUp,
+                               PLAYER.y + PLAYER.hitBoundaryYDown) &&
+     !ENEMY.invincibleTimer.isActive()
+     ) {
+    ENEMY.startHurt(PLAYER.getAttackDamage());
+    if (ENEMY.hp <= 0) {
+      PLAYER.isStalled = true;
+      // Need to process the hit to prevent survival on exactly 0 HP
+      ENEMY.processAction();
     }
   }
 }

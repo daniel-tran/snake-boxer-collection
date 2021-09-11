@@ -4,13 +4,15 @@ class AIFighter extends Fighter {
   int directionYDown = -1;
   int directionY = directionYDown; // 1 = up,  0 = stationary, -1 = down
   Timer directionYSwitchTimer = new Timer(1, 30, true);
-  Timer actionTimer = new Timer(1, 30, true);
+  Timer actionTimer = new Timer(1, 30, false);
   float chanceChangeDirection = 0.5;
   float chanceBlock = 0.4;
   float chanceAttack = 0.75;
   float chanceAttackSpecial = random(0.5);
   boolean useRandomBehaviour = true;
+  float chanceActionAfterHurt = 0.5;
   Timer behaviourTimer = new Timer(1, 120, true);
+  Timer invincibleTimer = new Timer(1, 5, true);
   
   AIFighter(float initialX, float initialY, String filenameIdle, String filenameBlock,
             String filenameHurt, String[] filenamesAttackNormal,
@@ -24,6 +26,7 @@ class AIFighter extends Fighter {
   }
   
   void resetToIdle() {
+    boolean wasHurt = isUsingHurtImage();
     super.resetToIdle();
     // Resume movement by selecting a random direction to go in
     float directionChance = random(0, 1);
@@ -32,6 +35,18 @@ class AIFighter extends Fighter {
     } else {
       directionY = directionYDown;
     }
+    
+    // Enable brief invincibility after hit recovery to prevent being locked in by multiple hits
+    if (wasHurt) {
+      invincibleTimer.tick();
+      if (random(0, 1) < chanceActionAfterHurt) {
+        actionTimer.forceOvertime();
+      }
+    }
+  }
+  
+  void setChanceOfActionAfterHurt(float chance) {
+    chanceActionAfterHurt = chance;
   }
   
   void startBlock() {
@@ -92,11 +107,12 @@ class AIFighter extends Fighter {
     }
   }
   
-  void decideAction() {    
+  void decideAction() {
     actionTimer.tick();
     // An action should only be made when the fighter is actually
     // available to make a next move.
     if (actionTimer.isOvertime() && isPlayable() && !isUsingHurtImage()) {
+      actionTimer.reset();
       float chance = random(0, 1);
       
       // First priority is the special attack, since it requires a charge-up.
@@ -126,6 +142,10 @@ class AIFighter extends Fighter {
       if (behaviourTimer.isOvertime()) {
         setRandomBehaviour();
       }
+    }
+    
+    if (invincibleTimer.isActive()) {
+      invincibleTimer.tick();
     }
   }
   
@@ -180,6 +200,7 @@ class AIFighter extends Fighter {
     speedYMultiplier += 0.1;
     attack1Multiplier += 0.1;
     damageMultiplier *= 0.9;
+    setChanceOfActionAfterHurt(chanceActionAfterHurt + 0.1);
   }
   
 }
