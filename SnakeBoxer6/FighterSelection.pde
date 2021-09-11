@@ -28,7 +28,7 @@ class FighterSelection {
     "STRONG MAD"
   };
   String[] fighterSelectedPresetBlurb = {
-    fighterSelectedPresetNames[0] + ":\nFASTER MOVEMENT SPEED\nMEANS A FASTER WIN!",
+    fighterSelectedPresetNames[0] + ":\nYOUR PORK KNUCKLES CAN'T\nBE BLOCKED BY OPPONENTS!",
     fighterSelectedPresetNames[1] + ":\nCHARGE BY BLOCKING\nFOR A DEADLY FLAME ATTACK!",
     fighterSelectedPresetNames[2] + ":\nYOUR SHELL REDUCES\nDAMAGE TAKEN FROM OPPONENTS!",
     fighterSelectedPresetNames[3] + ":\nCHARGE UP A WATER ATTACK!\nIT POWERS UP WHEN YOU LAND HITS!",

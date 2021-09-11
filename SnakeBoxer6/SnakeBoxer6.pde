@@ -341,12 +341,14 @@ void drawFightText() {
 void registerDamage() {
   // Player hit registration is determined first to prevent them
   // from overriding the enemy's attack
-  if (ENEMY.isUsingAttackImage() && PLAYER.isPlayable() && !PLAYER.isUsingBlockImage() &&
+  if (ENEMY.isUsingAttackImage() && PLAYER.isPlayable() &&
+     (!PLAYER.isUsingBlockImage() || ENEMY.isUnblockable) &&
      PLAYER.isWithinHitBoundary(PLAYER.x, PLAYER.x,
                                 ENEMY.y - ENEMY.hitBoundaryYUp,
                                 ENEMY.y + ENEMY.hitBoundaryYDown) 
      ) {
-    PLAYER.startHurt(ENEMY.getAttackDamage());
+    // When bypassing a block, the effect only needs to be applied when the target is blocking
+    PLAYER.startHurt(ENEMY.getAttackDamage(), ENEMY.isUnblockable && PLAYER.isUsingBlockImage());
     ENEMY.presetActivateOnHitAbility();
     if (PLAYER.hp <= 0) {
       ENEMY.isStalled = true;
@@ -354,13 +356,15 @@ void registerDamage() {
       PLAYER.processAction();
     }
   }
-  if (PLAYER.isUsingAttackImage() && ENEMY.isPlayable() && !ENEMY.isUsingBlockImage() &&
+  if (PLAYER.isUsingAttackImage() && ENEMY.isPlayable() &&
+     (!ENEMY.isUsingBlockImage() || PLAYER.isUnblockable) &&
      ENEMY.isWithinHitBoundary(ENEMY.x, ENEMY.x,
                                PLAYER.y - PLAYER.hitBoundaryYUp,
                                PLAYER.y + PLAYER.hitBoundaryYDown) &&
      !ENEMY.invincibleTimer.isActive()
      ) {
-    ENEMY.startHurt(PLAYER.getAttackDamage());
+    // When bypassing a block, the effect only needs to be applied when the target is blocking
+    ENEMY.startHurt(PLAYER.getAttackDamage(), PLAYER.isUnblockable && ENEMY.isUsingBlockImage());
     PLAYER.presetActivateOnHitAbility();
     if (ENEMY.hp <= 0) {
       PLAYER.isStalled = true;

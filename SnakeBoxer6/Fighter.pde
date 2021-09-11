@@ -39,6 +39,9 @@ class Fighter {
   boolean isStalled = false;
   color imgTint;
   boolean randomiseTintOnLifeRecovery = false;
+  // Note that toggling the unblockable flag does NOT do anything on its own.
+  // Mainly to be used along with the overload of the startHurt function.
+  boolean isUnblockable = false;
   // Default direction is right, so true = facing left
   boolean isFlippedX = false;
   boolean isDrawable = true;
@@ -82,8 +85,8 @@ class Fighter {
         "characters/BoxerJoe/BoxerJoe_Attack1.png",
         "characters/BoxerJoe/BoxerJoe_Attack2.png"
       });
-      // Ability: Speed boost
-      speedYMultiplier *= 2;
+      // Ability: Attacks cannot be blocked
+      isUnblockable = true;
     } else if (hasPresetName("COBRA JOE")) {
       setImageIdle("characters/CobraJoe/CobraJoe_Idle.png");
       setImageBlock("characters/CobraJoe/CobraJoe_Block.png");
@@ -420,6 +423,13 @@ class Fighter {
         hp = 0;
       }
     }
+  }
+  
+  void startHurt(float damage, boolean forceHurt) {
+    if (forceHurt) {
+      imgDrawn = imgIdle;
+    }
+    startHurt(damage);
   }
   
   boolean isPlayable() {
