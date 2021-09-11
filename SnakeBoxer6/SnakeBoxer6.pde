@@ -357,7 +357,8 @@ void registerDamage() {
   if (PLAYER.isUsingAttackImage() && ENEMY.isPlayable() && !ENEMY.isUsingBlockImage() &&
      ENEMY.isWithinHitBoundary(ENEMY.x, ENEMY.x,
                                PLAYER.y - PLAYER.hitBoundaryYUp,
-                               PLAYER.y + PLAYER.hitBoundaryYDown) 
+                               PLAYER.y + PLAYER.hitBoundaryYDown) &&
+     !ENEMY.invincibleTimer.isActive()
      ) {
     ENEMY.startHurt(PLAYER.getAttackDamage());
     PLAYER.presetActivateOnHitAbility();
