@@ -8,6 +8,8 @@ float PLAYER_BOUNDARY_MAX_Y;
 float ENEMY_RESET_X;
 int SCORE;
 int LEVEL;
+int ACTIVE_ENEMIES_COUNT;
+int ACTIVE_COLLECTIBLES_COUNT;
 int MAX_LEVEL_SCORE;
 TitleScreen TITLE_SCREEN;
 String[] FILENAMES_POSITIVE = {"items/Strawberry.png",
@@ -27,13 +29,13 @@ boolean JOYSTICK_ACTIVE;
 // due to the number of digits required to represent it.
 final int LEVEL_CAP = 99999;
 // Number of enemies to add upon levelling up
-final int ENEMY_INC = 4;
+final int ENEMY_INC = 2;
 // Total number of enemies that can be fought
-final int ENEMIES_COUNT = 16;
+final int TOTAL_ENEMIES_COUNT = 8;
 // Number of collectibles to add upon levelling up
 final int COLLECTIBLE_INC = 2;
 // Total number of collectibles that can be fought
-final int COLLECTIBLES_COUNT = ENEMIES_COUNT;
+final int TOTAL_COLLECTIBLES_COUNT = TOTAL_ENEMIES_COUNT;
 // Score increment upon defeating an enemy
 final int ENEMY_SCORE_INCREMENT = 50;
 // Score decrement upon colliding with an enemy
@@ -145,6 +147,8 @@ void setupGame() {
   LEVEL = 0;
   SCORE = 0;
   MAX_LEVEL_SCORE = SCORE;
+  ACTIVE_ENEMIES_COUNT = 0;
+  ACTIVE_COLLECTIBLES_COUNT = 0;
   
   PLAYER = new Fighter(width * 0.35, height * 0.45,
                        "characters/BoxerJoe/BoxerJoe_Idle.png",
@@ -155,10 +159,10 @@ void setupGame() {
                          "characters/BoxerJoe/BoxerJoe_Attack2.png"
                        },
                        UNIT_X * 22, UNIT_Y * 22);
-  ENEMIES = new MovingEnemy[ENEMIES_COUNT];
-  COLLECTIBLES = new MovingCollectible[COLLECTIBLES_COUNT];
-  // Set the initial enemies using the difficulty increase function
-  increaseDifficulty();
+  ENEMIES = new MovingEnemy[TOTAL_ENEMIES_COUNT];
+  COLLECTIBLES = new MovingCollectible[TOTAL_COLLECTIBLES_COUNT];
+  setupMovingElements();
+  
   // Randomise the background, but don't use the special backdrops
   BACKDROP = new Background(0, height * 0.15, UNIT_X);
   BACKDROP.selectBackground((int)random(BACKDROP.backgroundCount - 1));
@@ -166,8 +170,7 @@ void setupGame() {
   resetJoystick();
 }
 
-void increaseDifficulty() {
-  float[] possibleX = {width + UNIT_X};
+void setupMovingElements() {
   // Possible Y coordinates for respawning is based on the height of the 
   // playable space split into separate lanes.
   int possibleYCount = 14;
@@ -177,50 +180,46 @@ void increaseDifficulty() {
     // First position should start at the first increment instead of 0
     possibleY[i] = PLAYER_BOUNDARY_MIN_Y + (possibleYInc * (i + 1));
   }
-  // Assign level dependent variables before incrementing the level
-  // otherwise some enemies and collectibles won't be utilised
-  int firstEnemyIndex = LEVEL * ENEMY_INC;
-  int lastEnemyIndex = firstEnemyIndex + ENEMY_INC;
-  int firstCollectibleIndex = LEVEL * COLLECTIBLE_INC;
-  int lastCollectibleIndex = firstCollectibleIndex + COLLECTIBLE_INC;
-  incrementLevel();
+  increaseDifficulty();
   
-  // Maximum level is when all enemies are utilised
-  if (lastEnemyIndex < ENEMIES.length) {
-    for (int i = firstEnemyIndex; i < lastEnemyIndex; i++) {
-      // Set the spawn distance between each enemy
-      float initialOffsetX = PLAYER.imgWidth * i;
-      possibleX[0] += initialOffsetX;
-      float initialX = possibleX[(int)random(possibleX.length)];
-      float initialY = possibleY[(int)random(possibleY.length)];
-      ENEMIES[i] = new MovingEnemy(initialX, initialY,
-                                   "characters/Snake/Snake_Hurt.png",
-                                   new String[]{
-                                     "characters/Snake/Snake_Idle.png",
-                                     "characters/Snake/Snake_Idle2.png"
-                                   },
-                                   PLAYER.imgWidth, PLAYER.imgHeight,
-                                   possibleX, possibleY);
-      // Default enemy image alternation speed is a bit slow
-      ENEMIES[i].imgMovingTimer.timeMax *= 2;                                   
-    }
+  for (int i = 0; i < ENEMIES.length; i++) {
+    // Set the spawn distance between each enemy
+    float initialOffsetX = PLAYER.imgWidth * 2 * i;
+    float[] possibleX = {width + UNIT_X + initialOffsetX};
+    float initialX = possibleX[(int)random(possibleX.length)];
+    float initialY = possibleY[(int)random(possibleY.length)];
+    ENEMIES[i] = new MovingEnemy(initialX, initialY,
+                                 "characters/Snake/Snake_Hurt.png",
+                                 new String[]{
+                                   "characters/Snake/Snake_Idle.png",
+                                   "characters/Snake/Snake_Idle2.png"
+                                 },
+                                 PLAYER.imgWidth, PLAYER.imgHeight,
+                                 possibleX, possibleY);
+    // Default enemy image alternation speed is a bit slow
+    ENEMIES[i].imgMovingTimer.timeMax *= 2;
   }
 
-  if (lastCollectibleIndex < COLLECTIBLES.length) {
-    for (int i = firstCollectibleIndex; i < lastCollectibleIndex; i++) {
-      // Set the spawn distance between each collectible
-      float initialOffsetX = PLAYER.imgWidth * i;
-      possibleX[0] += initialOffsetX;
-      float initialX = possibleX[(int)random(possibleX.length)];
-      float initialY = possibleY[(int)random(possibleY.length)];
-      float collectibleSizeFactor = 0.35;
-      COLLECTIBLES[i] = new MovingCollectible(initialX, initialY,
-                                            possibleX, possibleY,
-                                            FILENAMES_POSITIVE, FILENAMES_NEGATIVE,
-                                            PLAYER.imgWidth * collectibleSizeFactor,
-                                            PLAYER.imgHeight * collectibleSizeFactor);
-    }
+  for (int i = 0; i < COLLECTIBLES.length; i++) {
+    // Set the spawn distance between each collectible
+    // Use an additional offset to minimise initial spawning within enemies
+    float initialOffsetX = PLAYER.imgWidth + (PLAYER.imgWidth * 2 * i);
+    float[] possibleX = {width + UNIT_X + initialOffsetX};
+    float initialX = possibleX[(int)random(possibleX.length)];
+    float initialY = possibleY[(int)random(possibleY.length)];
+    float collectibleSizeFactor = 0.35;
+    COLLECTIBLES[i] = new MovingCollectible(initialX, initialY,
+                                          possibleX, possibleY,
+                                          FILENAMES_POSITIVE, FILENAMES_NEGATIVE,
+                                          PLAYER.imgWidth * collectibleSizeFactor,
+                                          PLAYER.imgHeight * collectibleSizeFactor);
   }
+}
+
+void increaseDifficulty() {
+  incrementLevel();
+  ACTIVE_ENEMIES_COUNT = min(ACTIVE_ENEMIES_COUNT + ENEMY_INC, TOTAL_ENEMIES_COUNT);
+  ACTIVE_COLLECTIBLES_COUNT = min(ACTIVE_COLLECTIBLES_COUNT + COLLECTIBLE_INC, TOTAL_COLLECTIBLES_COUNT);
 }
 
 void speedUpEnemies() {
@@ -360,7 +359,7 @@ void keepPlayerInBoundaries() {
 }
 
 void drawEnemies() {
-  for (int i = 0; i < ENEMIES.length; i++) {
+  for (int i = 0; i < ACTIVE_ENEMIES_COUNT; i++) {
     // Ignore enemies that haven't been loaded, since the level is too low
     if (ENEMIES[i] == null) {
       continue;
@@ -403,7 +402,7 @@ void drawEnemies() {
 }
 
 void drawCollectibles() { 
-  for (int i = 0; i < COLLECTIBLES.length; i++) {
+  for (int i = 0; i < ACTIVE_COLLECTIBLES_COUNT; i++) {
     // Ignore collectibles that haven't been loaded, since the level is too low
     if (COLLECTIBLES[i] == null) {
       continue;
