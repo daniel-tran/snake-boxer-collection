@@ -8,8 +8,8 @@ class MinigameScoreCard extends MinigameManager {
   PImage imgPointActive = loadImage("minigames/ScoreCard/PointActiveFilled.png");
   PImage imgPointInactive = loadImage("minigames/ScoreCard/PointInactive.png");
   PImage imgOK = loadImage("minigames/ScoreCard/OK.png");
-  float scoreCardX = width * 0.5;
-  float scoreCardY = height * 0.5;
+  float scoreCardX = random(width * 0.25, width * 0.75);
+  float scoreCardY = random(height * 0.25, height * 0.55);
   float scoreCardWidth = width * 0.7;
   float scoreCardHeight = height * 0.8;
   float pointInitialX = scoreCardX - (scoreCardWidth * 0.275);
