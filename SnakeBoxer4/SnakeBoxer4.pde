@@ -376,7 +376,7 @@ void drawGame() {
       // Set the transition timer low enough that there's enough time for the
       // player or snake hurt animations to finish playing.
       // This will be set again (properly) once those animations finish.
-      TRANSITION_TIMER.time = -TRANSITION_TIMER.timeMax;
+      TRANSITION_TIMER.setTime(-TRANSITION_TIMER.timeMax);
       if (MM.hasWon) {
         for (int i = 0; i < ENEMIES.length; i++) {
           ENEMIES[i].startHurt();

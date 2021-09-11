@@ -91,7 +91,7 @@ class TitleScreen {
   
   void forceReset() {
     // Trigger the reset timer without waiting for it
-    gameResetTimer.time = gameResetTimer.timeMax;
+    gameResetTimer.forceOvertime();
     resetByTimer();
   }
 }

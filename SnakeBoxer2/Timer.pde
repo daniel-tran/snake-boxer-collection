@@ -36,6 +36,10 @@ class Timer{
     setTime(0);
   }
   
+  void forceOvertime() {
+    setTime(timeMax);
+  }
+  
   boolean isActive() {
     return time > 0;
   }
