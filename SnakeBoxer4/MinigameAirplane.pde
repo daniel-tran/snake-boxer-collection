@@ -132,7 +132,8 @@ class MinigameAirplane extends MinigameManager {
     // Player can drag the airplane as long as the approximate Y coordinate matches the screen press
     float airplaneDragAreaY = airplane.imgHeight * 0.25;
     if (abs(mouseY - airplane.y) <= airplaneDragAreaY && !enableLoseTimer) {
-      airplane.y = min(mouseY, gameSpaceHeight);
+      // Keep the airplane within the gamespace to prevent winning by simply moving offscreen
+      airplane.y = min(max(0, mouseY), gameSpaceHeight);
     }
   }
 }
