@@ -34,13 +34,13 @@ void setup() {
   ZONE_MOVE_UP = height * 0.5;
   ZONE_MOVE_DOWN = height * 0.5;
 
-  TITLE_SCREEN = new TitleScreen("titlescreen/SnakeBoxer_Logo.png",
+  TITLE_SCREEN = new TitleScreen("titlescreen/SnakeBoxer6_Logo.png",
                                  "USE THE SCREEN!\n\nTOUCH UP/DOWN= MOVE\nTOUCH RIGHT= BLOCK\n" +
                                  "HOLD RIGHT= CHARGE\nTOUCH LEFT= PUNCH\n\nTOUCH= START",
                                  width * 0.22, height * 0.65,
                                  UNIT_X, UNIT_Y);
   TITLE_SCREEN.setTagline("NOW THE SNAKES HAVE\nFISTS TOO", width * 0.225, height * 0.5);
-  TITLE_SCREEN.setGeneralItemImage("titlescreen/SnakeBoxer_BoxArt.png",
+  TITLE_SCREEN.setGeneralItemImage("titlescreen/SnakeBoxer6_BoxArt.png",
                                    width * 0.75, height * 0.75, UNIT_X * 27, UNIT_Y * 27);
 
   // Need to set up the World during setup, since the draw() function uses it to check for the game state

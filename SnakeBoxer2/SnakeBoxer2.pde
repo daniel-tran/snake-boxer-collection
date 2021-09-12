@@ -88,7 +88,7 @@ void setup() {
                                  "", 0, 0,
                                  UNIT_X, UNIT_Y);
   TITLE_SCREEN.setTagline("THE BITING OF\n  BOXER JOE", width * 0.225, height * 0.5);
-  TITLE_SCREEN.setGeneralItemImage("titlescreen/SnakeBoxer_Snake.png", width * 0.75, height * 0.7,
+  TITLE_SCREEN.setGeneralItemImage("titlescreen/SnakeBoxer2_Snake.png", width * 0.75, height * 0.7,
                                    UNIT_X * 30, UNIT_Y * 30);
   setupGame();
 }
