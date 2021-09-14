@@ -15,6 +15,8 @@ class DialogBoxUpgrade extends DialogBox {
   Upgrade powerUpgrade = new Upgrade(1, 2, 50);
   Upgrade idleUpgrade = new Upgrade(0, 5, 100);
   Timer idleTimer = new Timer(1, 90, true);
+  Timer pointsColourTimer = new Timer(1, 20, false);
+  color pointsColour;
   
   DialogBoxUpgrade(float initialX, float initialY, float initialWidth, float initialHeight,
                    float buttonWidth, float buttonHeight, boolean enableChoice) {
@@ -31,6 +33,8 @@ class DialogBoxUpgrade extends DialogBox {
     
     idleUpgradeButton = new ClickableButton(upgradeButtonX, upgradeButtonY + (upgradeButtonYInc * 2), buttonWidth, buttonHeight);
     idleUpgradeButton.setButtonText("GET!", dialogBoxTextSize);
+    
+    setPointsColourDefault();
   }
   
   void resetPoints() {
@@ -42,7 +46,9 @@ class DialogBoxUpgrade extends DialogBox {
   }
   
   void incrementPoints() {
-    // Used to add value according to a basic screen press
+    // Used to add value according to a basic screen press.
+    // Colour timer is reset to minimise the "flashing" of the points value when pressing the screen multiple times.
+    pointsColourTimer.reset();
     incrementPoints(powerUpgrade.getValue() * multiplierUpgrade.getValue());
   }
   
@@ -54,6 +60,28 @@ class DialogBoxUpgrade extends DialogBox {
     // Prevent numeric overflow by capping the points at a certain limit
     if (isPositivePoints && points < 0) {
       points = Integer.MAX_VALUE;
+    }
+    setPointsColour(value);
+  }
+  
+  color getPointsColour() {
+    return pointsColour;
+  }
+  
+  void setPointsColourDefault() {
+    setPointsColour(0);
+  }
+  
+  void setPointsColour(int value) {
+    // Set the font colour based on the type of score increment
+    if (value > 0) {
+      pointsColour = color(0, 255, 0);
+      pointsColourTimer.tick();
+    } else if (value < 0) {
+      pointsColour = color(255, 0, 0);
+      pointsColourTimer.tick();
+    } else {
+      pointsColour = color(0, 0, 0);
     }
   }
   
@@ -121,6 +149,17 @@ class DialogBoxUpgrade extends DialogBox {
       idleTimer.tick();
       if (idleTimer.isOvertime()) {
         incrementPoints(idleUpgrade.getValue() * multiplierUpgrade.getValue());
+      }
+    }
+  }
+  
+  void processPointsColourTimer() {
+    // Score font colour reverts back to the default colour eventually.
+    if (pointsColourTimer.isActive()) {
+      pointsColourTimer.tick();
+      if (pointsColourTimer.isOvertime()) {
+        pointsColourTimer.reset();
+        setPointsColourDefault();
       }
     }
   }

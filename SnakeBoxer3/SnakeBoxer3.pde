@@ -158,7 +158,7 @@ void draw() {
     drawBackground();
     
     // Draw the current points
-    fill(0);
+    fill(UPGRADE_MENU.getPointsColour());
     textSize(UNIT_X * 5);
     textAlign(CENTER);
     text(nfc(UPGRADE_MENU.getPoints()), width * 0.5, height * 0.25);
@@ -180,6 +180,7 @@ void draw() {
     EVENT_MENU.drawDialogBox();
     
     UPGRADE_MENU.processIdleTimer();
+    UPGRADE_MENU.processPointsColourTimer();
   }
 }
 
