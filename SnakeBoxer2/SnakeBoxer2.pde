@@ -33,11 +33,11 @@ float PLAYER_STEP_CAP_Y;
 // due to the number of digits required to represent it.
 final int LEVEL_CAP = 99999;
 // Number of enemies to add upon levelling up
-final int ENEMY_INC = 2;
+final int ENEMY_INC = 1;
 // Total number of enemies that can be fought
 final int TOTAL_ENEMIES_COUNT = 8;
 // Number of collectibles to add upon levelling up
-final int COLLECTIBLE_INC = 2;
+final int COLLECTIBLE_INC = 1;
 // Total number of collectibles that can be fought
 final int TOTAL_COLLECTIBLES_COUNT = TOTAL_ENEMIES_COUNT;
 // Score increment upon defeating an enemy
@@ -47,7 +47,7 @@ final int ENEMY_SCORE_DECREMENT = -ENEMY_SCORE_INCREMENT;
 // Health loss amount upon colliding with an enemy
 final int BASE_HURT_DAMAGE = 5;
 // Score boundaries that enable a level up
-final int[] LEVEL_BOUNDARIES = {500, 1000, 2000};
+final int[] LEVEL_BOUNDARIES = {500, 1000, 2000, 3000, 5000, 7000, 9000};
 // Score boundary that enables a level up when at the max. level
 final int MAX_LEVEL_SCORE_BOUNDARY = 1000;
 // The speed multiplier at which that enemies cannot increase once exceeded.
@@ -438,7 +438,7 @@ void drawCollectibles() {
 
 void damagePlayer() {
   // Amplified damage in later levels means higher probablility of losing
-  PLAYER.startHurt(BASE_HURT_DAMAGE * LEVEL);
+  PLAYER.startHurt(BASE_HURT_DAMAGE * LEVEL * 0.5);
 }
 
 void registerPlayerHurt(int enemyIndex) {
