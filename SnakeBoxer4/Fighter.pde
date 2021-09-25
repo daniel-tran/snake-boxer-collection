@@ -197,7 +197,7 @@ class Fighter {
   void presetActivateHealthRecoveryAbility() {
     if (isUsingPreset()) {
       if (hasPresetName("SNAKE FIST")) {
-        attackSpecialMultiplier = min((hpMax / hp), 8);
+        attackSpecialMultiplier = min((hpMax / hp) * 1.5, 8);
       }
     }
   }
